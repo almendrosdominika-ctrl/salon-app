@@ -2,11 +2,15 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const Stripe = require('stripe');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
+
+// Stripe
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -125,30 +129,28 @@ app.get('/panel', (req, res) => {
                         terminy.forEach(t => {
                             html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.status || '') + '</td><td>';
                             if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-                            html += '</td></tr>';
+                            html += 'NonNullable';
                         });
                     } else {
                         html += '<tr><td colspan="4">Brak terminów</td></tr>';
                     }
-                    html += '</tbody></table>';
+                    html += '</tbody></tr>';
                     document.getElementById('terminyLista').innerHTML = html;
                 }
-
                 async function ladujRezerwacje() {
                     const res = await fetch('/api/rezerwacje-salonu');
                     const rezerwacje = await res.json();
-                    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+                    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
                     if (Array.isArray(rezerwacje) && rezerwacje.length) {
                         rezerwacje.forEach(r => {
-                            html += '<tr><td>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button></td></tr>';
+                            html += '<tr><td>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
                         });
                     } else {
                         html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
                     }
-                    html += '</tbody></table>';
+                    html += '</tbody></tr>';
                     document.getElementById('rezerwacjeLista').innerHTML = html;
                 }
-
                 async function dodajTermin() {
                     const data = document.getElementById('data').value;
                     const godzina = document.getElementById('godzina').value;
@@ -201,7 +203,7 @@ app.post('/api/anuluj-rezerwacje-salon', async (req, res) => {
     res.json({ success: true });
 });
 
-// ---------- API KLIENTA ----------
+// ---------- API KLIENTA (bez Stripe, oryginalne) ----------
 app.get('/api/salony', async (req, res) => {
     const { data } = await supabase.from('salony').select('id, nazwa');
     res.json(data || []);
@@ -213,32 +215,51 @@ app.get('/api/wolne-terminy', async (req, res) => {
     res.json(data || []);
 });
 
-app.post('/api/zarezerwuj', async (req, res) => {
-    const { terminId, klientNazwa, klientEmail } = req.body;
-    await supabase.from('terminy').update({ status: 'zajety', klient_nazwa: klientNazwa, klient_email: klientEmail }).eq('id', terminId);
-    res.json({ success: true });
+// ---------- NOWY ENDPOINT STRIPE ----------
+app.post('/api/create-checkout-session', async (req, res) => {
+    const { terminId, klientNazwa, klientEmail, kwota, typ } = req.body;
+    try {
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'pln',
+                    product_data: {
+                        name: `Rezerwacja wizyty (${typ === 'zadatek' ? 'zadatek' : 'całość'})`,
+                        description: `Salon: wybrany, termin ID: ${terminId}`
+                    },
+                    unit_amount: Math.round(kwota * 100),
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `https://salon-app-1-r73k.onrender.com/rezerwacje-klient?success=true&terminId=${terminId}&klientNazwa=${encodeURIComponent(klientNazwa)}&klientEmail=${encodeURIComponent(klientEmail)}&kwota=${kwota}&typ=${typ}`,
+            cancel_url: `https://salon-app-1-r73k.onrender.com/rezerwacje-klient?canceled=true`,
+        });
+        res.json({ url: session.url });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.get('/api/moje-rezerwacje', async (req, res) => {
-    const { email } = req.query;
-    const { data } = await supabase.from('terminy').select('*, salony(nazwa)').eq('klient_email', email).eq('status', 'zajety').order('data', { ascending: true });
-    const wynik = (data || []).map(item => ({
-        id: item.id,
-        data: item.data,
-        godzina: item.godzina,
-        klient_nazwa: item.klient_nazwa,
-        nazwa_salonu: item.salony?.nazwa || 'Salon'
-    }));
-    res.json(wynik);
+app.post('/api/confirm-payment', async (req, res) => {
+    const { terminId, klientNazwa, klientEmail, kwota, typ } = req.body;
+    try {
+        // Aktualizacja terminu – rezerwacja
+        await supabase.from('terminy').update({ 
+            status: 'zajety', 
+            klient_nazwa: klientNazwa, 
+            klient_email: klientEmail,
+            calkowita_kwota: kwota,
+            zadatek_oplacony: typ === 'zadatek' ? 1 : 0
+        }).eq('id', terminId);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/anuluj-rezerwacje-klient', async (req, res) => {
-    const { id } = req.body;
-    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null }).eq('id', id);
-    res.json({ success: true });
-});
-
-// ---------- STRONA REZERWACJI KLIENTA ----------
+// ---------- STRONA REZERWACJI KLIENTA (zmodyfikowana z Stripe) ----------
 app.get('/rezerwacje-klient', async (req, res) => {
     const { data: salony } = await supabase.from('salony').select('id, nazwa');
     let listaSalonow = '<option value="">Wybierz salon...</option>';
@@ -270,9 +291,15 @@ app.get('/rezerwacje-klient', async (req, res) => {
                 <div id="formularz" style="display:none;">
                     <h3>Twoje dane</h3>
                     <input type="hidden" id="wybranyTerminId">
-                    <input type="text" id="klientNazwa" placeholder="Imię i nazwisko">
-                    <input type="email" id="klientEmail" placeholder="Email">
-                    <button onclick="zarezerwuj()">Potwierdź</button>
+                    <input type="text" id="klientNazwa" placeholder="Imię i nazwisko" required>
+                    <input type="email" id="klientEmail" placeholder="Email" required>
+                    <label>Wybierz opcję płatności:</label>
+                    <select id="platnoscTyp">
+                        <option value="zadatek">Tylko zadatek (20% kwoty)</option>
+                        <option value="calkowita">Całość kwoty</option>
+                    </select>
+                    <input type="number" id="calkowitaKwota" placeholder="Całkowita kwota (PLN)" required>
+                    <button onclick="zarezerwujZPlatnoscia()">Przejdź do płatności</button>
                 </div>
                 <hr>
                 <h2>📋 Moje rezerwacje</h2>
@@ -294,16 +321,55 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     }
                     document.getElementById('terminyContainer').innerHTML = html;
                 };
-                function wybierzTermin(id) { document.getElementById('wybranyTerminId').value = id; document.getElementById('formularz').style.display = 'block'; }
-                async function zarezerwuj() {
-                    const data = {
-                        terminId: document.getElementById('wybranyTerminId').value,
-                        klientNazwa: document.getElementById('klientNazwa').value,
-                        klientEmail: document.getElementById('klientEmail').value
-                    };
-                    await fetch('/api/zarezerwuj', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                    alert('Zarezerwowano!'); location.reload();
+                function wybierzTermin(id) {
+                    document.getElementById('wybranyTerminId').value = id;
+                    document.getElementById('formularz').style.display = 'block';
+                    document.getElementById('formularz').scrollIntoView({ behavior: 'smooth' });
                 }
+                async function zarezerwujZPlatnoscia() {
+                    const terminId = document.getElementById('wybranyTerminId').value;
+                    const klientNazwa = document.getElementById('klientNazwa').value;
+                    const klientEmail = document.getElementById('klientEmail').value;
+                    const platnoscTyp = document.getElementById('platnoscTyp').value;
+                    const kwota = parseFloat(document.getElementById('calkowitaKwota').value);
+                    if (!terminId || !klientNazwa || !klientEmail || !kwota) {
+                        alert('Wypełnij wszystkie pola');
+                        return;
+                    }
+                    const zadatek = platnoscTyp === 'zadatek' ? Math.floor(kwota * 0.2) : kwota;
+                    const res = await fetch('/api/create-checkout-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ terminId, klientNazwa, klientEmail, kwota: zadatek, typ: platnoscTyp })
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        alert('Błąd tworzenia sesji płatności');
+                    }
+                }
+                // Obsługa powrotu z płatności (success/cancel)
+                window.onload = function() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('success') === 'true') {
+                        const terminId = urlParams.get('terminId');
+                        const klientNazwa = urlParams.get('klientNazwa');
+                        const klientEmail = urlParams.get('klientEmail');
+                        const kwota = urlParams.get('kwota');
+                        const typ = urlParams.get('typ');
+                        fetch('/api/confirm-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ terminId, klientNazwa, klientEmail, kwota, typ })
+                        }).then(() => {
+                            alert('Płatność zakończona pomyślnie! Rezerwacja została zapisana.');
+                            window.location.href = '/rezerwacje-klient';
+                        });
+                    } else if (urlParams.get('canceled') === 'true') {
+                        alert('Płatność została anulowana.');
+                    }
+                };
                 function startCountdown(data, godzina, id) {
                     let target = new Date(data + 'T' + godzina);
                     setInterval(() => {
@@ -348,6 +414,25 @@ app.get('/rezerwacje-klient', async (req, res) => {
         </body>
         </html>
     `);
+});
+
+app.get('/api/moje-rezerwacje', async (req, res) => {
+    const { email } = req.query;
+    const { data } = await supabase.from('terminy').select('*, salony(nazwa)').eq('klient_email', email).eq('status', 'zajety').order('data', { ascending: true });
+    const wynik = (data || []).map(item => ({
+        id: item.id,
+        data: item.data,
+        godzina: item.godzina,
+        klient_nazwa: item.klient_nazwa,
+        nazwa_salonu: item.salony?.nazwa || 'Salon'
+    }));
+    res.json(wynik);
+});
+
+app.post('/api/anuluj-rezerwacje-klient', async (req, res) => {
+    const { id } = req.body;
+    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null }).eq('id', id);
+    res.json({ success: true });
 });
 
 app.get('/wyloguj', (req, res) => {
