@@ -6,6 +6,11 @@ const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Testowy endpoint (sprawdzenie, czy serwer działa)
+app.get('/ping', (req, res) => {
+    res.send('pong');
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({ secret: 'secret', resave: false, saveUninitialized: true }));
@@ -119,9 +124,9 @@ app.get('/panel', (req, res) => {
                     const rezerwacje = await res.json();
                     let html = '</td><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
                     rezerwacje.forEach(r => {
-                        html += '<tr><td>' + r.data + '</td><td>' + r.godzina + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
+                        html += '<tr><td>' + r.data + '</tr><td>' + r.godzina + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
                     });
-                    html += '</tbody></table>';
+                    html += '</tbody></tr>';
                     document.getElementById('rezerwacjeLista').innerHTML = html;
                 }
                 async function dodajTermin() {
