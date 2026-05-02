@@ -6,14 +6,30 @@ const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Testowy endpoint (sprawdzenie, czy serwer działa)
-app.get('/ping', (req, res) => {
-    res.send('pong');
-});
+// Ustawienie zaufania do proxy (wymagane dla Render)
+app.set('trust proxy', 1);
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(session({ secret: 'secret', resave: false, saveUninitialized: true }));
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
+    cookie: {
+        secure: isProduction,
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24,
+        sameSite: 'lax'
+    }
+}));
+
+// Testowy endpoint
+app.get('/ping', (req, res) => {
+    res.send('pong');
+});
 
 // Supabase
 const supabaseUrl = 'https://mzikoowaictyhtxawmkm.supabase.co';
@@ -112,9 +128,9 @@ app.get('/panel', (req, res) => {
                     const terminy = await res.json();
                     let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
                     terminy.forEach(t => {
-                        html += '<tr><td>' + t.data + '</td><td>' + t.godzina + '</td><td>' + t.status + '</td><td>';
+                        html += '<tr><td>' + t.data + '</td><td>' + t.godzina + '</td><td>' + t.status + '<tr><td>';
                         if(t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-                        html += 'NonNullable';
+                        html += '</td></tr>';
                     });
                     html += '</tbody></table>';
                     document.getElementById('terminyLista').innerHTML = html;
@@ -122,11 +138,11 @@ app.get('/panel', (req, res) => {
                 async function ladujRezerwacje() {
                     const res = await fetch('/api/rezerwacje-salonu');
                     const rezerwacje = await res.json();
-                    let html = '</td><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+                    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
                     rezerwacje.forEach(r => {
-                        html += '<tr><td>' + r.data + '</tr><td>' + r.godzina + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
+                        html += '<tr><td>' + r.data + '</td><td>' + r.godzina + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button></td></tr>';
                     });
-                    html += '</tbody></tr>';
+                    html += '</tbody></table>';
                     document.getElementById('rezerwacjeLista').innerHTML = html;
                 }
                 async function dodajTermin() {
