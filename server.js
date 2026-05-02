@@ -123,9 +123,9 @@ app.get('/panel', (req, res) => {
                     let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
                     if (Array.isArray(terminy) && terminy.length) {
                         terminy.forEach(t => {
-                            html += '</td><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.status || '') + '</td><td>';
+                            html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.status || '') + '</td><td>';
                             if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-                            html += 'NonNullable';
+                            html += '</td></tr>';
                         });
                     } else {
                         html += '<tr><td colspan="4">Brak terminów</td></tr>';
@@ -133,13 +133,14 @@ app.get('/panel', (req, res) => {
                     html += '</tbody></table>';
                     document.getElementById('terminyLista').innerHTML = html;
                 }
+
                 async function ladujRezerwacje() {
                     const res = await fetch('/api/rezerwacje-salonu');
                     const rezerwacje = await res.json();
-                    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+                    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
                     if (Array.isArray(rezerwacje) && rezerwacje.length) {
                         rezerwacje.forEach(r => {
-                            html += '<tr><td>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
+                            html += '<tr><td>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button></td></tr>';
                         });
                     } else {
                         html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
@@ -147,6 +148,7 @@ app.get('/panel', (req, res) => {
                     html += '</tbody></table>';
                     document.getElementById('rezerwacjeLista').innerHTML = html;
                 }
+
                 async function dodajTermin() {
                     const data = document.getElementById('data').value;
                     const godzina = document.getElementById('godzina').value;
