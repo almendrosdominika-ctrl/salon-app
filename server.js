@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // Stripe
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = Stripe('sk_test_51TSfVFHXPWEiqBNHQkksNKR64uJ85peY0S9Zkn8zT9tiLgD9JIXa6koDs8F4U89tak8E7lak6sGUzsKOwPw2drO400utRV5wKA');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
