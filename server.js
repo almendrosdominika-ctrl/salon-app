@@ -158,16 +158,18 @@ app.get('/panel', (req, res) => {
     html += '</tbody></tr>';
     document.getElementById('rezerwacjeLista').innerHTML = html;
 }
-                async function dodajTermin() {
-                    const data = document.getElementById('data').value;
-                    const godzina = document.getElementById('godzina').value;
-                    await fetch('/api/dodaj-termin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data, godzina }) });
-                    ladujTerminy();
-                }
-                async function usunTermin(id) {
-                    await fetch('/api/usun-termin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                    ladujTerminy();
-                }
+           async function dodajTermin() {
+    const data = document.getElementById('data').value;
+    const godzina = document.getElementById('godzina').value;
+    const usluga = document.getElementById('usluga').value;
+    const cena = document.getElementById('cena').value;
+    await fetch('/api/dodaj-termin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, godzina, usluga, cena })
+    });
+    ladujTerminy();
+}
                 async function anulujRezerwacje(id) {
                     await fetch('/api/anuluj-rezerwacje-salon', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
                     ladujRezerwacje(); ladujTerminy();
