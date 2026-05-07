@@ -195,8 +195,15 @@ app.get('/api/rezerwacje-salonu', async (req, res) => {
 });
 
 app.post('/api/dodaj-termin', async (req, res) => {
-    const { data, godzina } = req.body;
-    await supabase.from('terminy').insert([{ salon_id: req.session.salon_id, data, godzina, status: 'wolny' }]);
+    const { data, godzina, usluga, cena } = req.body;
+    await supabase.from('terminy').insert([{
+        salon_id: req.session.salon_id,
+        data,
+        godzina,
+        status: 'wolny',
+        usluga: usluga || '',
+        cena: parseInt(cena) || 0
+    }]);
     res.json({ success: true });
 });
 
