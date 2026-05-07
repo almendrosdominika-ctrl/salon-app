@@ -330,7 +330,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     const terminy = await res.json();
                     let html = '<h3>Dostępne terminy:</h3>';
                     if (Array.isArray(terminy) && terminy.length) {
-                        terminy.forEach(t => { html += '<div class="termin" onclick="wybierzTermin(' + t.id + ')">📅 ' + t.data + ' o ' + t.godzina + '</div>'; });
+                       html += '<div class="termin" onclick="wybierzTermin(' + t.id + ', ' + t.cena + ')">📅 ' + t.data + ' o ' + t.godzina + ' – ' + t.usluga + ' (' + t.cena + ' zł)</div>';
                     } else {
                         html += '<p>Brak wolnych terminów</p>';
                     }
