@@ -9,7 +9,8 @@ const port = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-// Stripe
+// ========== STRIPE ==========
+// TWÓJ TESTOWY KLUCZ TAJNY (skopiowany z panelu Stripe)
 const stripe = Stripe('sk_test_51TSfVFHXPWEiqBNHQkksNKR64uJ85peY0S9Zkn8zT9tiLgD9JIXa6koDs8F4U89tak8E7lak6sGUzsKOwPw2drO400utRV5wKA');
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -31,6 +32,7 @@ app.use(session({
 
 app.get('/ping', (req, res) => res.send('pong'));
 
+// ========== SUPABASE ==========
 const supabaseUrl = 'https://mzikoowaictyhtxawmkm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16aWtvb3dhaWN0eWh0eGF3bWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTU2MjIsImV4cCI6MjA5MzE3MTYyMn0.XPUMq7CXL6J_-gBU1vwSgdOTvB1C8SkwdyzKrNvqzFo';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -39,7 +41,7 @@ app.get('/', (req, res) => {
     res.send('<h1>SalonApp działa!</h1><a href="/login-panel">Panel salonu</a><br><a href="/rezerwacje-klient">Rezerwuj wizytę</a>');
 });
 
-// ---------- LOGOWANIE I REJESTRACJA ----------
+// ========== LOGOWANIE I REJESTRACJA SALONU ==========
 app.get('/login-panel', (req, res) => {
     res.send(`
         <form method="post" action="/login-panel">
@@ -90,7 +92,7 @@ app.post('/rejestracja-salonu', async (req, res) => {
     }
 });
 
-// ---------- PANEL SALONU ----------
+// ========== PANEL SALONU ==========
 app.get('/panel', (req, res) => {
     if (!req.session.salon_id) return res.redirect('/login-panel');
 
@@ -121,65 +123,32 @@ app.get('/panel', (req, res) => {
                 <div id="rezerwacjeLista"></div>
             </div>
             <script>
-async function ladujTerminy() {
-    const res = await fetch('/api/terminy-salonu');
-    const terminy = await res.json();
-    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
-    if (Array.isArray(terminy) && terminy.length) {
-        terminy.forEach(t => {
-            html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.status || '') + '</td><td>';
-            if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-            html += '</td></tr>';
-        });
-    } else {
-        html += '<tr><td colspan="4">Brak terminów</td></tr>';
-    }
-    html += '</tbody></tr>';
-    document.getElementById('terminyLista').innerHTML = html;
-}
-
-async function ladujRezerwacje() {
-    const res = await fetch('/api/rezerwacje-salonu');
-    const rezerwacje = await res.json();
-    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th><tr></thead><tbody>';
-    if (Array.isArray(rezerwacje) && rezerwacje.length) {
-        rezerwacje.forEach(r => {
-            html += '<tr><td>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
-        });
-    } else {
-        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
-    }
-    html += '</tbody></tr>';
-    document.getElementById('rezerwacjeLista').innerHTML = html;
-}
-
-async function dodajTermin() {
-    const data = document.getElementById('data').value;
-    const godzina = document.getElementById('godzina').value;
-    await fetch('/api/dodaj-termin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data, godzina }) });
-    ladujTerminy();
-}
-
-async function usunTermin(id) {
-    await fetch('/api/usun-termin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-    ladujTerminy();
-}
-
-async function anulujRezerwacje(id) {
-    await fetch('/api/anuluj-rezerwacje-salon', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-    ladujRezerwacje(); ladujTerminy();
-}
-
-ladujTerminy(); ladujRezerwacje();
+                async function ladujTerminy() {
+                    const res = await fetch('/api/terminy-salonu');
+                    const terminy = await res.json();
+                    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+                    if (Array.isArray(terminy) && terminy.length) {
+                        terminy.forEach(t => {
+                            html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.status || '') + '</td><td>';
+                            if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
+                            html += 'NonNullable';
+                        });
+                    } else {
+                        html += '<tr><td colspan="4">Brak terminów</td></tr>';
+                    }
+                    html += '</tbody></tr>';
+                    document.getElementById('terminyLista').innerHTML = html;
+                }
+                async function ladujRezerwacje() {
                     const res = await fetch('/api/rezerwacje-salonu');
                     const rezerwacje = await res.json();
-                    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+                    let html = '</table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th><tr></thead><tbody>';
                     if (Array.isArray(rezerwacje) && rezerwacje.length) {
                         rezerwacje.forEach(r => {
                             html += '<tr><td>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>NonNullable';
                         });
                     } else {
-                        html += '<td><td colspan="5">Brak rezerwacji</td></tr>';
+                        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
                     }
                     html += '</tbody></tr>';
                     document.getElementById('rezerwacjeLista').innerHTML = html;
@@ -205,7 +174,7 @@ ladujTerminy(); ladujRezerwacje();
     `);
 });
 
-// ---------- API SALONU ----------
+// ========== API SALONU ==========
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
     const { data } = await supabase.from('terminy').select('*').eq('salon_id', req.session.salon_id).order('data', { ascending: true });
@@ -236,7 +205,7 @@ app.post('/api/anuluj-rezerwacje-salon', async (req, res) => {
     res.json({ success: true });
 });
 
-// ---------- API KLIENTA ----------
+// ========== API KLIENTA ==========
 app.get('/api/salony', async (req, res) => {
     const { data } = await supabase.from('salony').select('id, nazwa');
     res.json(data || []);
@@ -248,7 +217,7 @@ app.get('/api/wolne-terminy', async (req, res) => {
     res.json(data || []);
 });
 
-// ---------- STRIPE ENDPOINTS ----------
+// ========== STRIPE ENDPOINTS ==========
 app.post('/api/create-checkout-session', async (req, res) => {
     const { terminId, klientNazwa, klientEmail, kwota, typ } = req.body;
     try {
@@ -291,7 +260,7 @@ app.post('/api/confirm-payment', async (req, res) => {
     }
 });
 
-// ---------- STRONA REZERWACJI KLIENTA (z Stripe) ----------
+// ========== STRONA REZERWACJI KLIENTA (z Stripe) ==========
 app.get('/rezerwacje-klient', async (req, res) => {
     const { data: salony } = await supabase.from('salony').select('id, nazwa');
     let listaSalonow = '<option value="">Wybierz salon...</option>';
@@ -381,7 +350,6 @@ app.get('/rezerwacje-klient', async (req, res) => {
                         alert('Błąd tworzenia sesji płatności');
                     }
                 }
-                // Obsługa powrotu z płatności
                 window.onload = function() {
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('success') === 'true') {
@@ -448,7 +416,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
     `);
 });
 
-// ---------- MOJE REZERWACJE (API) ----------
+// ========== MOJE REZERWACJE (API) ==========
 app.get('/api/moje-rezerwacje', async (req, res) => {
     const { email } = req.query;
     const { data } = await supabase.from('terminy').select('*, salony(nazwa)').eq('klient_email', email).eq('status', 'zajety').order('data', { ascending: true });
