@@ -116,7 +116,11 @@ app.get('/panel', (req, res) => {
                 <h1>📅 Panel zarządzania</h1>
                 <a href="/wyloguj">Wyloguj</a>
                 <h2>➕ Dodaj termin</h2>
-                <input type="date" id="data"><input type="time" id="godzina"><button onclick="dodajTermin()">Dodaj</button>
+<input type="date" id="data"><br>
+<input type="time" id="godzina"><br>
+<input type="text" id="usluga" placeholder="Nazwa usługi (np. Piercing ucha)" required><br>
+<input type="number" id="cena" placeholder="Cena (PLN)" required><br>
+<button onclick="dodajTermin()">Dodaj</button>
                 <h2>📋 Moje terminy</h2>
                 <div id="terminyLista"></div>
                 <h2>📌 Rezerwacje klientów</h2>
