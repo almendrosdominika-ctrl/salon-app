@@ -313,7 +313,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                         <option value="zadatek">Tylko zadatek (20% kwoty)</option>
                         <option value="calkowita">Całość kwoty</option>
                     </select>
-                    <input type="number" id="calkowitaKwota" placeholder="Całkowita kwota (PLN)" required>
+                    <input type="hidden" id="wybranaCena">
                     <button onclick="zarezerwujZPlatnoscia()">Przejdź do płatności</button>
                 </div>
                 <hr>
