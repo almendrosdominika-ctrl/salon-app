@@ -137,8 +137,10 @@ app.get('/panel', (req, res) => {
                 html += '<td>' + (t.usluga || '') + '</td>';
                 html += '<td>' + (t.cena || 0) + '</td>';
                 html += '<td>' + (t.status || '') + '</td>';
-                if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-                html += '</td>';
+                html += '<td>';
+if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
+html += '</td>';
+html += '</tr>';
                 html += '</tr>';
             });
         } else {
