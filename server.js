@@ -141,21 +141,26 @@ app.get('/panel', (req, res) => {
                     document.getElementById('terminyLista').innerHTML = html;
                 }
 
-                async function ladujRezerwacje() {
-                    const res = await fetch('/api/rezerwacje-salonu');
-                    const rezerwacje = await res.json();
-                    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th><tr></thead><tbody>';
-                    if (Array.isArray(rezerwacje) && rezerwacje.length) {
-                        rezerwacje.forEach(r => {
-                            html += '<tr>'
-    + '<td>' + (r.data || '') + '</tr>'
-    + '<td>' + (r.godzina || '') + '</td>'
-    + '<td>' + (r.klient_nazwa || '') + '</td>'
-    + '<td>' + (r.klient_email || '') + '</td>'
-    + '<td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>'
-    + '</td>'
-    + '</tr>';
-                        });
+               async function ladujRezerwacje() {
+    const res = await fetch('/api/rezerwacje-salonu');
+    const rezerwacje = await res.json();
+    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+    if (Array.isArray(rezerwacje) && rezerwacje.length) {
+        rezerwacje.forEach(r => {
+            html += '<tr>';
+            html += '<td>' + (r.data || '') + '</td>';
+            html += '<td>' + (r.godzina || '') + '</td>';
+            html += '<td>' + (r.klient_nazwa || '') + '</td>';
+            html += '<td>' + (r.klient_email || '') + '</td>';
+            html += '<td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button></td>';
+            html += '</tr>';
+        });
+    } else {
+        html += '<tr><td colspan="5" style="text-align:center;">Brak rezerwacji</td></tr>';
+    }
+    html += '</tbody></table>';
+    document.getElementById('rezerwacjeLista').innerHTML = html;
+}
                     } else {
                         html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
                     }
