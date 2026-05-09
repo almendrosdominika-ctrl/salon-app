@@ -125,15 +125,26 @@ app.get('/panel', (req, res) => {
                 <div id="rezerwacjeLista"></div>
             </div>
             <script>
-                async function ladujTerminy() {
-                    const res = await fetch('/api/terminy-salonu');
-                    const terminy = await res.json();
-                    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
-                    if (Array.isArray(terminy) && terminy.length) {
-                        terminy.forEach(t => {
-                            html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.usluga || '') + '</td><td>' + (t.cena || 0) + '</td><td>' + (t.status || '') + '</td><td>';
-                            html += '<tr></tr>';
-                        });
+                async function dodajTermin() {
+    const data = document.getElementById('data').value;
+    const godzina = document.getElementById('godzina').value;
+    const usluga = document.getElementById('usluga').value;
+    const cena = document.getElementById('cena').value;
+    if (!data || !godzina || !usluga || !cena) {
+        alert('Wypełnij wszystkie pola');
+        return;
+    }
+    await fetch('/api/dodaj-termin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, godzina, usluga, cena })
+    });
+    ladujTerminy();
+    document.getElementById('data').value = '';
+    document.getElementById('godzina').value = '';
+    document.getElementById('usluga').value = '';
+    document.getElementById('cena').value = '';
+}
                     } else {
                         html += '<tr><td colspan="6">Brak terminów</td></tr>';
                     }
