@@ -147,8 +147,14 @@ app.get('/panel', (req, res) => {
                     let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th><tr></thead><tbody>';
                     if (Array.isArray(rezerwacje) && rezerwacje.length) {
                         rezerwacje.forEach(r => {
-                            html += '<td><tr>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>';
-                           html += '</td></tr>';
+                            html += '<tr>'
+    + '<td>' + (r.data || '') + '</tr>'
+    + '<td>' + (r.godzina || '') + '</td>'
+    + '<td>' + (r.klient_nazwa || '') + '</td>'
+    + '<td>' + (r.klient_email || '') + '</td>'
+    + '<td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>'
+    + '</td>'
+    + '</tr>';
                         });
                     } else {
                         html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
