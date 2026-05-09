@@ -124,8 +124,7 @@ app.get('/panel', (req, res) => {
                 <h2>📌 Rezerwacje klientów</h2>
                 <div id="rezerwacjeLista"></div>
             </div>
-            <script>
-                async function dodajTermin() {
+          async function dodajTermin() {
     const data = document.getElementById('data').value;
     const godzina = document.getElementById('godzina').value;
     const usluga = document.getElementById('usluga').value;
@@ -139,6 +138,12 @@ app.get('/panel', (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data, godzina, usluga, cena })
     });
+    ladujTerminy();
+    document.getElementById('data').value = '';
+    document.getElementById('godzina').value = '';
+    document.getElementById('usluga').value = '';
+    document.getElementById('cena').value = '';
+}
     ladujTerminy();
     document.getElementById('data').value = '';
     document.getElementById('godzina').value = '';
