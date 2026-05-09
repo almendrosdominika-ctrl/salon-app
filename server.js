@@ -9,8 +9,7 @@ const port = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-// ========== STRIPE ==========
-// TWÓJ TESTOWY KLUCZ TAJNY (skopiowany z panelu Stripe)
+// Stripe - TWÓJ TESTOWY KLUCZ TAJNY (wklejony poprawnie)
 const stripe = Stripe('sk_test_51TSfVFHXPWEiqBNHQkksNKR64uJ85peY0S9Zkn8zT9tiLgD9JIXa6koDs8F4U89tak8E7lak6sGUzsKOwPw2drO400utRV5wKA');
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -32,7 +31,6 @@ app.use(session({
 
 app.get('/ping', (req, res) => res.send('pong'));
 
-// ========== SUPABASE ==========
 const supabaseUrl = 'https://mzikoowaictyhtxawmkm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16aWtvb3dhaWN0eWh0eGF3bWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTU2MjIsImV4cCI6MjA5MzE3MTYyMn0.XPUMq7CXL6J_-gBU1vwSgdOTvB1C8SkwdyzKrNvqzFo';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -41,7 +39,7 @@ app.get('/', (req, res) => {
     res.send('<h1>SalonApp działa!</h1><a href="/login-panel">Panel salonu</a><br><a href="/rezerwacje-klient">Rezerwuj wizytę</a>');
 });
 
-// ========== LOGOWANIE I REJESTRACJA SALONU ==========
+// ---------- LOGOWANIE I REJESTRACJA SALONU ----------
 app.get('/login-panel', (req, res) => {
     res.send(`
         <form method="post" action="/login-panel">
@@ -92,7 +90,7 @@ app.post('/rejestracja-salonu', async (req, res) => {
     }
 });
 
-// ========== PANEL SALONU ==========
+// ---------- PANEL SALONU ----------
 app.get('/panel', (req, res) => {
     if (!req.session.salon_id) return res.redirect('/login-panel');
 
@@ -116,90 +114,99 @@ app.get('/panel', (req, res) => {
                 <h1>📅 Panel zarządzania</h1>
                 <a href="/wyloguj">Wyloguj</a>
                 <h2>➕ Dodaj termin</h2>
-<input type="date" id="data"><br>
-<input type="time" id="godzina"><br>
-<input type="text" id="usluga" placeholder="Nazwa usługi (np. Piercing ucha)" required><br>
-<input type="number" id="cena" placeholder="Cena (PLN)" required><br>
-<button onclick="dodajTermin()">Dodaj</button>
+                <input type="date" id="data" required><br>
+                <input type="time" id="godzina" required><br>
+                <input type="text" id="usluga" placeholder="Nazwa usługi (np. Piercing ucha)" required><br>
+                <input type="number" id="cena" placeholder="Cena (PLN)" required><br>
+                <button onclick="dodajTermin()">Dodaj</button>
                 <h2>📋 Moje terminy</h2>
                 <div id="terminyLista"></div>
                 <h2>📌 Rezerwacje klientów</h2>
                 <div id="rezerwacjeLista"></div>
             </div>
             <script>
-             async function ladujTerminy() {
-    const res = await fetch('/api/terminy-salonu');
-    const terminy = await res.json();
-    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th><tr></thead><tbody>';
-    if (Array.isArray(terminy) && terminy.length) {
-        terminy.forEach(t => {
-            html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.usluga || '') + '</td><td>' + (t.cena || 0) + '</td><td>' + (t.status || '') + '</td><td>';
-            if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-            html += '';
-        });
-    } else {
-        html += '<tr><td colspan="6">Brak terminów</td></tr>';
-    }
-    html += '</tbody><tr>';
-    document.getElementById('terminyLista').innerHTML = html;
-}
-    } else {
-        html += '<tr><td colspan="6">Brak terminów</td></tr>';
-    }
-    html += '</tbody></tr>';
-    document.getElementById('terminyLista').innerHTML = html;
-}
-    } else {
-        html += '<tr><td colspan="4">Brak terminów</td></tr>';
-    }
-    html += '</tbody></tr>';
-    document.getElementById('terminyLista').innerHTML = html;
-}
-              async function ladujRezerwacje() {
-    const res = await fetch('/api/rezerwacje-salonu');
-    const rezerwacje = await res.json();
-    let html = '</table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
-    if (Array.isArray(rezerwacje) && rezerwacje.length) {
-        rezerwacje.forEach(r => {
-            html += '<tr><tr>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>';
-            html += '';
-        });
-    } else {
-        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
-    }
-    html += '</tbody></table>';
-    document.getElementById('rezerwacjeLista').innerHTML = html;
-}
-    } else {
-        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
-    }
-    html += '</tbody></tr>';
-    document.getElementById('rezerwacjeLista').innerHTML = html;
-}
-           async function dodajTermin() {
-    const data = document.getElementById('data').value;
-    const godzina = document.getElementById('godzina').value;
-    const usluga = document.getElementById('usluga').value;
-    const cena = document.getElementById('cena').value;
-    await fetch('/api/dodaj-termin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, godzina, usluga, cena })
-    });
-    ladujTerminy();
-}
-                async function anulujRezerwacje(id) {
-                    await fetch('/api/anuluj-rezerwacje-salon', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                    ladujRezerwacje(); ladujTerminy();
+                async function ladujTerminy() {
+                    const res = await fetch('/api/terminy-salonu');
+                    const terminy = await res.json();
+                    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+                    if (Array.isArray(terminy) && terminy.length) {
+                        terminy.forEach(t => {
+                            html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.usluga || '') + '</td><td>' + (t.cena || 0) + '</td><td>' + (t.status || '') + '</td><td>';
+                            if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
+                            html += 'NonNullable';
+                        });
+                    } else {
+                        html += '<tr><td colspan="6">Brak terminów</td></tr>';
+                    }
+                    html += '</tbody></table>';
+                    document.getElementById('terminyLista').innerHTML = html;
                 }
-                ladujTerminy(); ladujRezerwacje();
+
+                async function ladujRezerwacje() {
+                    const res = await fetch('/api/rezerwacje-salonu');
+                    const rezerwacje = await res.json();
+                    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th><tr></thead><tbody>';
+                    if (Array.isArray(rezerwacje) && rezerwacje.length) {
+                        rezerwacje.forEach(r => {
+                            html += '<td><tr>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>';
+                            html += 'NonNullable';
+                        });
+                    } else {
+                        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
+                    }
+                    html += '</tbody></tr>';
+                    document.getElementById('rezerwacjeLista').innerHTML = html;
+                }
+
+                async function dodajTermin() {
+                    const data = document.getElementById('data').value;
+                    const godzina = document.getElementById('godzina').value;
+                    const usluga = document.getElementById('usluga').value;
+                    const cena = document.getElementById('cena').value;
+                    if (!data || !godzina || !usluga || !cena) {
+                        alert('Wypełnij wszystkie pola');
+                        return;
+                    }
+                    await fetch('/api/dodaj-termin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data, godzina, usluga, cena })
+                    });
+                    ladujTerminy();
+                    document.getElementById('data').value = '';
+                    document.getElementById('godzina').value = '';
+                    document.getElementById('usluga').value = '';
+                    document.getElementById('cena').value = '';
+                }
+
+                async function usunTermin(id) {
+                    await fetch('/api/usun-termin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    ladujTerminy();
+                }
+
+                async function anulujRezerwacje(id) {
+                    await fetch('/api/anuluj-rezerwacje-salon', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    ladujRezerwacje();
+                    ladujTerminy();
+                }
+
+                ladujTerminy();
+                ladujRezerwacje();
             </script>
         </body>
         </html>
     `);
 });
 
-// ========== API SALONU ==========
+// ---------- API SALONU ----------
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
     const { data } = await supabase.from('terminy').select('*').eq('salon_id', req.session.salon_id).order('data', { ascending: true });
@@ -237,7 +244,7 @@ app.post('/api/anuluj-rezerwacje-salon', async (req, res) => {
     res.json({ success: true });
 });
 
-// ========== API KLIENTA ==========
+// ---------- API KLIENTA ----------
 app.get('/api/salony', async (req, res) => {
     const { data } = await supabase.from('salony').select('id, nazwa');
     res.json(data || []);
@@ -249,7 +256,7 @@ app.get('/api/wolne-terminy', async (req, res) => {
     res.json(data || []);
 });
 
-// ========== STRIPE ENDPOINTS ==========
+// ---------- STRIPE ENDPOINTS ----------
 app.post('/api/create-checkout-session', async (req, res) => {
     const { terminId, klientNazwa, klientEmail, kwota, typ } = req.body;
     try {
@@ -292,7 +299,7 @@ app.post('/api/confirm-payment', async (req, res) => {
     }
 });
 
-// ========== STRONA REZERWACJI KLIENTA (z Stripe) ==========
+// ---------- STRONA REZERWACJI KLIENTA (z Stripe) ----------
 app.get('/rezerwacje-klient', async (req, res) => {
     const { data: salony } = await supabase.from('salony').select('id, nazwa');
     let listaSalonow = '<option value="">Wybierz salon...</option>';
@@ -348,14 +355,17 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     const terminy = await res.json();
                     let html = '<h3>Dostępne terminy:</h3>';
                     if (Array.isArray(terminy) && terminy.length) {
-                       html += '<div class="termin" onclick="wybierzTermin(' + t.id + ', ' + t.cena + ')">📅 ' + t.data + ' o ' + t.godzina + ' – ' + t.usluga + ' (' + t.cena + ' zł)</div>';
+                        terminy.forEach(t => {
+                            html += '<div class="termin" onclick="wybierzTermin(' + t.id + ', ' + (t.cena || 0) + ')">📅 ' + t.data + ' o ' + t.godzina + ' – ' + (t.usluga || 'brak usługi') + ' (' + (t.cena || 0) + ' zł)</div>';
+                        });
                     } else {
                         html += '<p>Brak wolnych terminów</p>';
                     }
                     document.getElementById('terminyContainer').innerHTML = html;
                 };
-                function wybierzTermin(id) {
+                function wybierzTermin(id, cena) {
                     document.getElementById('wybranyTerminId').value = id;
+                    document.getElementById('wybranaCena').value = cena;
                     document.getElementById('formularz').style.display = 'block';
                     document.getElementById('formularz').scrollIntoView({ behavior: 'smooth' });
                 }
@@ -364,9 +374,9 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     const klientNazwa = document.getElementById('klientNazwa').value;
                     const klientEmail = document.getElementById('klientEmail').value;
                     const platnoscTyp = document.getElementById('platnoscTyp').value;
-                    const kwota = parseFloat(document.getElementById('calkowitaKwota').value);
+                    const kwota = parseFloat(document.getElementById('wybranaCena').value);
                     if (!terminId || !klientNazwa || !klientEmail || !kwota) {
-                        alert('Wypełnij wszystkie pola');
+                        alert('Wypełnij wszystkie dane lub wybierz termin');
                         return;
                     }
                     const zadatek = platnoscTyp === 'zadatek' ? Math.floor(kwota * 0.2) : kwota;
@@ -448,7 +458,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
     `);
 });
 
-// ========== MOJE REZERWACJE (API) ==========
+// ---------- MOJE REZERWACJE (API) ----------
 app.get('/api/moje-rezerwacje', async (req, res) => {
     const { email } = req.query;
     const { data } = await supabase.from('terminy').select('*, salony(nazwa)').eq('klient_email', email).eq('status', 'zajety').order('data', { ascending: true });
