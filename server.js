@@ -132,8 +132,7 @@ app.get('/panel', (req, res) => {
                     if (Array.isArray(terminy) && terminy.length) {
                         terminy.forEach(t => {
                             html += '<tr><td>' + (t.data || '') + '</td><td>' + (t.godzina || '') + '</td><td>' + (t.usluga || '') + '</td><td>' + (t.cena || 0) + '</td><td>' + (t.status || '') + '</td><td>';
-                            if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-                            html += 'NonNullable';
+                            html += '<tr></tr>';
                         });
                     } else {
                         html += '<tr><td colspan="6">Brak terminów</td></tr>';
@@ -149,7 +148,7 @@ app.get('/panel', (req, res) => {
                     if (Array.isArray(rezerwacje) && rezerwacje.length) {
                         rezerwacje.forEach(r => {
                             html += '<td><tr>' + (r.data || '') + '</td><td>' + (r.godzina || '') + '</td><td>' + (r.klient_nazwa || '') + '</td><td>' + (r.klient_email || '') + '</td><td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button>';
-                            html += 'NonNullable';
+                           html += '</td></tr>';
                         });
                     } else {
                         html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
