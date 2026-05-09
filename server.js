@@ -156,6 +156,12 @@ app.get('/panel', (req, res) => {
             html += '</tr>';
         });
     } else {
+        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
+    }
+    html += '</tbody></table>';
+    document.getElementById('rezerwacjeLista').innerHTML = html;
+}
+    } else {
         html += '<tr><td colspan="5" style="text-align:center;">Brak rezerwacji</td></tr>';
     }
     html += '</tbody></table>';
