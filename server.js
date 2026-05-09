@@ -155,7 +155,7 @@ html += '</tr>';
     async function ladujRezerwacje() {
         const res = await fetch('/api/rezerwacje-salonu');
         const rezerwacje = await res.json();
-        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(rezerwacje) && rezerwacje.length) {
             rezerwacje.forEach(r => {
                 html += '<tr>';
