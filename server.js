@@ -120,6 +120,30 @@ app.get('/panel', (req, res) => {
                 <input type="number" id="cena" placeholder="Cena (PLN)" required><br>
                 <button onclick="dodajTermin()">Dodaj</button>
                 <h2>📋 Moje terminy</h2>
+                <h2>📦 Pakiety usług</h2>
+<div id="pakietyLista"></div>
+<button onclick="pokazFormularzPakietu()">➕ Nowy pakiet</button>
+<div id="formularzPakietu" style="display:none; margin-top:10px; padding:10px; border:1px solid #ccc;">
+    <h3>Tworzenie pakietu</h3>
+    <input type="text" id="nazwaPakietu" placeholder="Nazwa pakietu (np. Złoty wieczór)"><br>
+    <input type="text" id="uslugiPakietu" placeholder="Lista usług (oddziel przecinkami)"><br>
+    <input type="number" id="cenaPakietu" placeholder="Cena całkowita (PLN)"><br>
+    <input type="number" id="czasPakietu" placeholder="Łączny czas w minutach"><br>
+    <button onclick="dodajPakiet()">Zapisz pakiet</button>
+    <button onclick="ukryjFormularzPakietu()">Anuluj</button>
+</div>
+<hr>
+<h3>⚙️ Ustawienia zniżki na pakiety</h3>
+<select id="znizkaSelect">
+    <option value="0">0% (bez zniżki)</option>
+    <option value="5">5%</option>
+    <option value="10">10%</option>
+    <option value="15">15%</option>
+    <option value="20">20%</option>
+</select>
+<button onclick="zapiszZnizke()">Zapisz ustawienie</button>
+<div id="komunikatZnizka"></div>
+<hr>
                 <div id="terminyLista"></div>
                 <h2>📌 Rezerwacje klientów</h2>
                 <div id="rezerwacjeLista"></div>
@@ -187,6 +211,86 @@ html += '</tr>';
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data, godzina, usluga, cena })
         });
+        async function ladujPakiety() {
+    const res = await fetch('/api/pakiety');
+    const pakiety = await res.json();
+    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Usługi</th><th>Cena (PLN)</th><th>Czas (min)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+    if (pakiety.length) {
+        pakiety.forEach(p => {
+            html += `<tr>
+                <td>${p.id}</td>
+                <td>${p.nazwa}</td>
+                <td>${p.lista_uslug}</td>
+                <td>${p.cena_calkowita}</td>
+                <td>${p.czas_trwania_minuty}</td>
+                <td>${p.aktywny ? 'aktywny' : 'nieaktywny'}</td>
+                <td><button onclick="usunPakiet(${p.id})">Usuń</button></td>
+            </tr>`;
+        });
+    } else {
+        html += '<tr><td colspan="7">Brak pakietów</td></tr>';
+    }
+    html += '</tbody></table>';
+    document.getElementById('pakietyLista').innerHTML = html;
+}
+
+async function ladujZnizke() {
+    const res = await fetch('/api/znizka');
+    const data = await res.json();
+    document.getElementById('znizkaSelect').value = data.znizka || 0;
+}
+
+function pokazFormularzPakietu() {
+    document.getElementById('formularzPakietu').style.display = 'block';
+}
+
+function ukryjFormularzPakietu() {
+    document.getElementById('formularzPakietu').style.display = 'none';
+}
+
+async function dodajPakiet() {
+    const nazwa = document.getElementById('nazwaPakietu').value;
+    const uslugi = document.getElementById('uslugiPakietu').value;
+    const cena = document.getElementById('cenaPakietu').value;
+    const czas = document.getElementById('czasPakietu').value;
+    if (!nazwa || !uslugi || !cena || !czas) {
+        alert('Wypełnij wszystkie pola');
+        return;
+    }
+    await fetch('/api/dodaj-pakiet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nazwa, lista_uslug: uslugi, cena_calkowita: parseInt(cena), czas_trwania_minuty: parseInt(czas) })
+    });
+    ladujPakiety();
+    ukryjFormularzPakietu();
+    document.getElementById('nazwaPakietu').value = '';
+    document.getElementById('uslugiPakietu').value = '';
+    document.getElementById('cenaPakietu').value = '';
+    document.getElementById('czasPakietu').value = '';
+}
+
+async function usunPakiet(id) {
+    if (confirm('Usunąć pakiet?')) {
+        await fetch('/api/usun-pakiet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        ladujPakiety();
+    }
+}
+
+async function zapiszZnizke() {
+    const znizka = document.getElementById('znizkaSelect').value;
+    await fetch('/api/ustaw-znizke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ znizka_procent: parseInt(znizka) })
+    });
+    document.getElementById('komunikatZnizka').innerHTML = '✅ Ustawienie zapisane!';
+    setTimeout(() => document.getElementById('komunikatZnizka').innerHTML = '', 3000);
+}
         ladujTerminy();
         document.getElementById('data').value = '';
         document.getElementById('godzina').value = '';
