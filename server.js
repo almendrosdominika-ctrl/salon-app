@@ -220,7 +220,18 @@ html += '</tr>';
         </html>
     `);
 });
+// ---------- PAKIETY I USTAWIENIA ----------
+app.get('/api/pakiety', async (req, res) => {
+    if (!req.session.salon_id) return res.json([]);
+    const { data } = await supabase.from('pakiety').select('*').eq('salon_id', req.session.salon_id);
+    res.json(data || []);
+});
 
+app.get('/api/znizka', async (req, res) => {
+    if (!req.session.salon_id) return res.json({ znizka: 0 });
+    const { data } = await supabase.from('ustawienia_salonu').select('znizka_procent').eq('salon_id', req.session.salon_id).single();
+    res.json({ znizka: data?.znizka_procent || 0 });
+});
 // ---------- API SALONU ----------
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
