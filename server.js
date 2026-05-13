@@ -336,6 +336,35 @@ app.get('/api/znizka', async (req, res) => {
     const { data } = await supabase.from('ustawienia_salonu').select('znizka_procent').eq('salon_id', req.session.salon_id).single();
     res.json({ znizka: data?.znizka_procent || 0 });
 });
+app.post('/api/dodaj-pakiet', async (req, res) => {
+    if (!req.session.salon_id) return res.status(401).json({ error: 'Brak sesji' });
+    const { nazwa, lista_uslug, cena_calkowita, czas_trwania_minuty } = req.body;
+    await supabase.from('pakiety').insert([{
+        salon_id: req.session.salon_id,
+        nazwa,
+        lista_uslug,
+        cena_calkowita,
+        czas_trwania_minuty,
+        aktywny: true
+    }]);
+    res.json({ success: true });
+});
+
+app.post('/api/usun-pakiet', async (req, res) => {
+    const { id } = req.body;
+    await supabase.from('pakiety').delete().eq('id', id);
+    res.json({ success: true });
+});
+
+app.post('/api/ustaw-znizke', async (req, res) => {
+    if (!req.session.salon_id) return res.status(401).json({ error: 'Brak sesji' });
+    const { znizka_procent } = req.body;
+    await supabase.from('ustawienia_salonu').upsert({
+        salon_id: req.session.salon_id,
+        znizka_procent
+    });
+    res.json({ success: true });
+});
 // ---------- API SALONU ----------
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
