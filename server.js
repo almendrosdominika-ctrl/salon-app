@@ -152,7 +152,7 @@ app.get('/panel', (req, res) => {
            async function ladujPakiety() {
     const res = await fetch('/api/pakiety');
     const pakiety = await res.json();
-    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Usługi</th><th>Cena (PLN)</th><th>Czas (min)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Usługi</th><th>Cena (PLN)</th><th>Czas (min)</th><th>Status</th><th>Akcja</th></td></thead><tbody>';
     if (pakiety.length) {
         pakiety.forEach(p => {
             html += `<tr>
@@ -163,10 +163,10 @@ app.get('/panel', (req, res) => {
                 <td>${p.czas_trwania_minuty}</td>
                 <td>${p.aktywny ? 'aktywny' : 'nieaktywny'}</td>
                 <td><button onclick="usunPakiet(${p.id})">Usuń</button></td>
-            </tr>`;
+            </td>`;
         });
     } else {
-        html += '<tr><td colspan="7">Brak pakietów</td></tr>';
+        html += '<tr><td colspan="7">Brak pakietów</td></td>';
     }
     html += '</tbody></table>';
     document.getElementById('pakietyLista').innerHTML = html;
