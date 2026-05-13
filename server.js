@@ -317,8 +317,10 @@ html += '</tr>';
         ladujTerminy();
     }
 
-    ladujTerminy();
+       ladujTerminy();
     ladujRezerwacje();
+    ladujPakiety();
+    ladujZnizke();
 </script>
         </body>
         </html>
