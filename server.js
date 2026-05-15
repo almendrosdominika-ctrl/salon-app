@@ -152,7 +152,7 @@ app.get('/panel', (req, res) => {
            async function ladujPakiety() {
     const res = await fetch('/api/pakiety');
     const pakiety = await res.json();
-    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Usługi</th><th>Cena (PLN)</th><th>Czas (min)</th><th>Status</th><th>Akcja</th></td></thead><tbody>';
+    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Usługi</th><th>Cena (PLN)</th><th>Czas (min)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
     if (pakiety.length) {
         pakiety.forEach(p => {
             html += `<tr>
