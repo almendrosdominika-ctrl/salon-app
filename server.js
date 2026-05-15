@@ -390,18 +390,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     document.getElementById('formularz').style.display = 'block';
                     document.getElementById('formularz').scrollIntoView({ behavior: 'smooth' });
                 }
-               async function zapiszNotatke() {
-    const terminId = document.getElementById('wybranyTerminId').value;
-    const notatka = document.getElementById('notatka').value;
-    if (!terminId) {
-        alert('Najpierw wybierz termin z listy');
-        return;
-    }
-    const res = await fetch('/api/zapisz-notatke', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ terminId, notatka })
-    });
+               
     const data = await res.json();
     if (data.success) {
         alert('Notatka zapisana!');
@@ -525,9 +514,9 @@ app.get('/wyloguj', (req, res) => {
     res.redirect('/');
 });
 app.post('/api/zapisz-notatke', async (req, res) => {
-    const { idTerminu, notatka } = req.body;
-    if (!idTerminu) return res.status(400).json({ error: 'Brak ID terminu' });
-    const { error } = await supabase.from('terminy').update({ notatka: notatka || null }).eq('id', idTerminu);
+    const { terminId, notatka } = req.body;
+    if (!terminId) return res.status(400).json({ error: 'Brak ID terminu' });
+    const { error } = await supabase.from('terminy').update({ notatka: notatka || null }).eq('id', terminId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
 });
