@@ -3,7 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const Stripe = require('stripe');
-
+const notatki = require('./notatki');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -34,7 +34,8 @@ app.get('/ping', (req, res) => res.send('pong'));
 const supabaseUrl = 'https://mzikoowaictyhtxawmkm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16aWtvb3dhaWN0eWh0eGF3bWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTU2MjIsImV4cCI6MjA5MzE3MTYyMn0.XPUMq7CXL6J_-gBU1vwSgdOTvB1C8SkwdyzKrNvqzFo';
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+const supabase = createClient(supabaseUrl, supabaseKey);
+notatki(app, supabase);   // <-- DODAJ TĘ LINIĘ TUTAJ
 app.get('/', (req, res) => {
     res.send('<h1>SalonApp działa!</h1><a href="/login-panel">Panel salonu</a><br><a href="/rezerwacje-klient">Rezerwuj wizytę</a>');
 });
