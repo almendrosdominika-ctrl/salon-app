@@ -241,11 +241,11 @@ async function zapiszZnizke() {
                 html += '<td>' + (t.cena || 0) + '</td>';
                 html += '<td>' + (t.status || '') + '</td>';
                 html += '<td>';
-html += '<td>';
-if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-html += '</td>';
-html += '</tr>';
-html += '</tr>';
+html += '<tr>';
+                html += 'td>';
+                if (t.status === 'wolny') html += 'button onclick+"usunTermin(' + t.id + ')">Usuń</button>';
+                html += '<tr>';
+                html += '</tr>';
                 html += '</tr>';
             });
         } else {
