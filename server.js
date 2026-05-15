@@ -141,7 +141,7 @@ app.get('/panel', (req, res) => {
             </tr>`;
             });
         } else {
-            html += '<tr><td colspan="6">Brak terminów</td></tr>';
+            html += '<tr><td colspan="6">Brak terminów</t2d></tr>';
         }
         html += '</tbody></table>';
         document.getElementById('terminyLista').innerHTML = html;
@@ -266,7 +266,13 @@ app.get('/api/wolne-terminy', async (req, res) => {
     const { data } = await supabase.from('terminy').select('*').eq('salon_id', salon_id).eq('status', 'wolny').order('data', { ascending: true });
     res.json(data || []);
 });
-
+app.post('/api/zapisz-notatke', async (req, res) => {
+    const { terminId, notatka } = req.body;
+    if (!terminId) return res.status(400).json({ error: 'Brak ID terminu' });
+    const { error } = await supabase.from('terminy').update({ notatka: notatka || null }).eq('id', terminId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+});
 // ---------- STRIPE ENDPOINTS ----------
 app.post('/api/create-checkout-session', async (req, res) => {
     const { terminId, klientNazwa, klientEmail, kwota, typ, notatka } = req.body;
@@ -318,7 +324,6 @@ app.get('/rezerwacje-klient', async (req, res) => {
     if (salony && salony.length) {
         salony.forEach(s => { listaSalonow += `<option value="${s.id}">${s.nazwa}</option>`; });
     }
-
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -384,6 +389,25 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     document.getElementById('formularz').style.display = 'block';
                     document.getElementById('formularz').scrollIntoView({ behavior: 'smooth' });
                 }
+               async function zapiszNotatke() {
+    const terminId = document.getElementById('wybranyTerminId').value;
+    const notatka = document.getElementById('notatka').value;
+    if (!terminId) {
+        alert('Najpierw wybierz termin z listy');
+        return;
+    }
+    const res = await fetch('/api/zapisz-notatke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ terminId, notatka })
+    });
+    const data = await res.json();
+    if (data.success) {
+        alert('Notatka zapisana!');
+    } else {
+        alert('Błąd: ' + (data.error || 'nieznany błąd'));
+    }
+}
                 async function zarezerwujZPlatnoscia() {
                     const terminId = document.getElementById('wybranyTerminId').value;
                     const klientNazwa = document.getElementById('klientNazwa').value;
