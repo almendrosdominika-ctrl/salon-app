@@ -231,7 +231,7 @@ async function zapiszZnizke() {
     async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
-        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(terminy) && terminy.length) {
             terminy.forEach(t => {
                 html += '<tr>';
