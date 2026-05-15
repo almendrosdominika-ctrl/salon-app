@@ -524,7 +524,13 @@ app.get('/wyloguj', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
-
+app.post('/api/zapisz-notatke', async (req, res) => {
+    const { idTerminu, notatka } = req.body;
+    if (!idTerminu) return res.status(400).json({ error: 'Brak ID terminu' });
+    const { error } = await supabase.from('terminy').update({ notatka: notatka || null }).eq('id', idTerminu);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+});
 app.listen(port, '0.0.0.0', () => {
     console.log('Serwer działa na http://localhost:' + port);
 });
