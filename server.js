@@ -120,121 +120,18 @@ app.get('/panel', (req, res) => {
                 <input type="number" id="cena" placeholder="Cena (PLN)" required><br>
                 <button onclick="dodajTermin()">Dodaj</button>
                 <h2>📋 Moje terminy</h2>
-                <h2>📦 Pakiety usług</h2>
-<div id="pakietyLista"></div>
-<button onclick="pokazFormularzPakietu()">➕ Nowy pakiet</button>
-<div id="formularzPakietu" style="display:none; margin-top:10px; padding:10px; border:1px solid #ccc;">
-    <h3>Tworzenie pakietu</h3>
-    <input type="text" id="nazwaPakietu" placeholder="Nazwa pakietu (np. Złoty wieczór)"><br>
-    <input type="text" id="uslugiPakietu" placeholder="Lista usług (oddziel przecinkami)"><br>
-    <input type="number" id="cenaPakietu" placeholder="Cena całkowita (PLN)"><br>
-    <input type="number" id="czasPakietu" placeholder="Łączny czas w minutach"><br>
-    <button onclick="dodajPakiet()">Zapisz pakiet</button>
-    <button onclick="ukryjFormularzPakietu()">Anuluj</button>
-</div>
-<hr>
-<h3>⚙️ Ustawienia zniżki na pakiety</h3>
-<select id="znizkaSelect">
-    <option value="0">0% (bez zniżki)</option>
-    <option value="5">5%</option>
-    <option value="10">10%</option>
-    <option value="15">15%</option>
-    <option value="20">20%</option>
-</select>
-<button onclick="zapiszZnizke()">Zapisz ustawienie</button>
-<div id="komunikatZnizka"></div>
-<hr>
                 <div id="terminyLista"></div>
                 <h2>📌 Rezerwacje klientów</h2>
                 <div id="rezerwacjeLista"></div>
             </div>
          <script>
-async function ladujPakiety() {
-    const res = await fetch('/api/pakiety');
-    const pakiety = await res.json();
-    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Usługi</th><th>Cena (PLN)</th><th>Czas (min)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
-    if (pakiety.length) {
-        pakiety.forEach(p => {
-            html += `<tr>
-                <td>${p.id}</td>
-                <td>${p.nazwa}</td>
-                <td>${p.lista_uslug}</td>
-                <td>${p.cena_calkowita}</td>
-                <td>${p.czas_trwania_minuty}</td>
-                <td>${p.aktywny ? 'aktywny' : 'nieaktywny'}</td>
-                <td><button onclick="usunPakiet(${p.id})">Usuń</button></td>
-            </tr>`;
-        });
-    } else {
-        html += '<tr><td colspan="7">Brak pakietów</td></tr>';
-    }
-    html += '</tbody></table>';
-    document.getElementById('pakietyLista').innerHTML = html;
-}
-async function ladujZnizke() {
-    const res = await fetch('/api/znizka');
-    const data = await res.json();
-    document.getElementById('znizkaSelect').value = data.znizka || 0;
-}
-
-function pokazFormularzPakietu() {
-    document.getElementById('formularzPakietu').style.display = 'block';
-}
-
-function ukryjFormularzPakietu() {
-    document.getElementById('formularzPakietu').style.display = 'none';
-}
-
-async function dodajPakiet() {
-    const nazwa = document.getElementById('nazwaPakietu').value;
-    const uslugi = document.getElementById('uslugiPakietu').value;
-    const cena = document.getElementById('cenaPakietu').value;
-    const czas = document.getElementById('czasPakietu').value;
-    if (!nazwa || !uslugi || !cena || !czas) {
-        alert('Wypełnij wszystkie pola');
-        return;
-    }
-    await fetch('/api/dodaj-pakiet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nazwa, lista_uslug: uslugi, cena_calkowita: parseInt(cena), czas_trwania_minuty: parseInt(czas) })
-    });
-    ladujPakiety();
-    ukryjFormularzPakietu();
-    document.getElementById('nazwaPakietu').value = '';
-    document.getElementById('uslugiPakietu').value = '';
-    document.getElementById('cenaPakietu').value = '';
-    document.getElementById('czasPakietu').value = '';
-}
-
-async function usunPakiet(id) {
-    if (confirm('Usunąć pakiet?')) {
-        await fetch('/api/usun-pakiet', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
-        });
-        ladujPakiety();
-    }
-}
-
-async function zapiszZnizke() {
-    const znizka = document.getElementById('znizkaSelect').value;
-    await fetch('/api/ustaw-znizke', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ znizka_procent: parseInt(znizka) })
-    });
-    document.getElementById('komunikatZnizka').innerHTML = '✅ Ustawienie zapisane!';
-    setTimeout(() => document.getElementById('komunikatZnizka').innerHTML = '', 3000);
-}
     async function ladujTerminy() {
-    const res = await fetch('/api/terminy-salonu');
-    const terminy = await res.json();
-    let html = '<td><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
-    if (Array.isArray(terminy) && terminy.length) {
-        terminy.forEach(t => {
-            html += `<tr>
+        const res = await fetch('/api/terminy-salonu');
+        const terminy = await res.json();
+        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th><tr></thead><tbody>';
+        if (Array.isArray(terminy) && terminy.length) {
+            terminy.forEach(t => {
+                html += `<tr>
                 <td>${t.data || ''}</td>
                 <td>${t.godzina || ''}</td>
                 <td>${t.usluga || ''}</td>
@@ -242,33 +139,35 @@ async function zapiszZnizke() {
                 <td>${t.status || ''}</td>
                 <td>${t.status === 'wolny' ? '<button onclick="usunTermin(' + t.id + ')">Usuń</button>' : ''}</td>
             </tr>`;
-        });
-    } else {
-        html += '<tr><td colspan="6">Brak terminów</td></tr>';
+            });
+        } else {
+            html += '<tr><td colspan="6">Brak terminów</td></tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('terminyLista').innerHTML = html;
     }
-    html += '</tbody></table>';
-    document.getElementById('terminyLista').innerHTML = html;
-}
-async function ladujRezerwacje() {
-    const res = await fetch('/api/rezerwacje-salonu');
-    const rezerwacje = await res.json();
-    let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
-    if (Array.isArray(rezerwacje) && rezerwacje.length) {
-        rezerwacje.forEach(r => {
-            html += `<tr>
+
+    async function ladujRezerwacje() {
+        const res = await fetch('/api/rezerwacje-salonu');
+        const rezerwacje = await res.json();
+        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Notatka</th><th>Akcja</th></tr></thead><tbody>';
+        if (Array.isArray(rezerwacje) && rezerwacje.length) {
+            rezerwacje.forEach(r => {
+                html += `<tr>
                 <td>${r.data || ''}</td>
                 <td>${r.godzina || ''}</td>
                 <td>${r.klient_nazwa || ''}</td>
                 <td>${r.klient_email || ''}</td>
+                <td>${r.notatka || ''}</td>
                 <td><button class="danger" onclick="anulujRezerwacje(${r.id})">Odmów</button></td>
             </tr>`;
-        });
-    } else {
-        html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
+            });
+        } else {
+            html += '<tr><td colspan="6">Brak rezerwacji</td></tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('rezerwacjeLista').innerHTML = html;
     }
-    html += '</tbody></table>';
-    document.getElementById('rezerwacjeLista').innerHTML = html;
-}
 
     async function dodajTermin() {
         const data = document.getElementById('data').value;
@@ -310,56 +209,14 @@ async function ladujRezerwacje() {
         ladujTerminy();
     }
 
-       ladujTerminy();
+    ladujTerminy();
     ladujRezerwacje();
-    ladujPakiety();
-    ladujZnizke();
 </script>
         </body>
         </html>
     `);
 });
-// ---------- PAKIETY I USTAWIENIA ----------
-app.get('/api/pakiety', async (req, res) => {
-    if (!req.session.salon_id) return res.json([]);
-    const { data } = await supabase.from('pakiety').select('*').eq('salon_id', req.session.salon_id);
-    res.json(data || []);
-});
 
-app.get('/api/znizka', async (req, res) => {
-    if (!req.session.salon_id) return res.json({ znizka: 0 });
-    const { data } = await supabase.from('ustawienia_salonu').select('znizka_procent').eq('salon_id', req.session.salon_id).single();
-    res.json({ znizka: data?.znizka_procent || 0 });
-});
-app.post('/api/dodaj-pakiet', async (req, res) => {
-    if (!req.session.salon_id) return res.status(401).json({ error: 'Brak sesji' });
-    const { nazwa, lista_uslug, cena_calkowita, czas_trwania_minuty } = req.body;
-    await supabase.from('pakiety').insert([{
-        salon_id: req.session.salon_id,
-        nazwa,
-        lista_uslug,
-        cena_calkowita,
-        czas_trwania_minuty,
-        aktywny: true
-    }]);
-    res.json({ success: true });
-});
-
-app.post('/api/usun-pakiet', async (req, res) => {
-    const { id } = req.body;
-    await supabase.from('pakiety').delete().eq('id', id);
-    res.json({ success: true });
-});
-
-app.post('/api/ustaw-znizke', async (req, res) => {
-    if (!req.session.salon_id) return res.status(401).json({ error: 'Brak sesji' });
-    const { znizka_procent } = req.body;
-    await supabase.from('ustawienia_salonu').upsert({
-        salon_id: req.session.salon_id,
-        znizka_procent
-    });
-    res.json({ success: true });
-});
 // ---------- API SALONU ----------
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
@@ -394,7 +251,7 @@ app.post('/api/usun-termin', async (req, res) => {
 
 app.post('/api/anuluj-rezerwacje-salon', async (req, res) => {
     const { id } = req.body;
-    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null }).eq('id', id);
+    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null, notatka: null }).eq('id', id);
     res.json({ success: true });
 });
 
@@ -412,7 +269,7 @@ app.get('/api/wolne-terminy', async (req, res) => {
 
 // ---------- STRIPE ENDPOINTS ----------
 app.post('/api/create-checkout-session', async (req, res) => {
-    const { terminId, klientNazwa, klientEmail, kwota, typ } = req.body;
+    const { terminId, klientNazwa, klientEmail, kwota, typ, notatka } = req.body;
     try {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -428,7 +285,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `https://salon-app-1-r73k.onrender.com/rezerwacje-klient?success=true&terminId=${terminId}&klientNazwa=${encodeURIComponent(klientNazwa)}&klientEmail=${encodeURIComponent(klientEmail)}&kwota=${kwota}&typ=${typ}`,
+            success_url: `https://salon-app-1-r73k.onrender.com/rezerwacje-klient?success=true&terminId=${terminId}&klientNazwa=${encodeURIComponent(klientNazwa)}&klientEmail=${encodeURIComponent(klientEmail)}&kwota=${kwota}&typ=${typ}&notatka=${encodeURIComponent(notatka || '')}`,
             cancel_url: `https://salon-app-1-r73k.onrender.com/rezerwacje-klient?canceled=true`,
         });
         res.json({ url: session.url });
@@ -438,14 +295,15 @@ app.post('/api/create-checkout-session', async (req, res) => {
 });
 
 app.post('/api/confirm-payment', async (req, res) => {
-    const { terminId, klientNazwa, klientEmail, kwota, typ } = req.body;
+    const { terminId, klientNazwa, klientEmail, kwota, typ, notatka } = req.body;
     try {
         await supabase.from('terminy').update({ 
             status: 'zajety', 
             klient_nazwa: klientNazwa, 
             klient_email: klientEmail,
             calkowita_kwota: kwota,
-            zadatek_oplacony: typ === 'zadatek' ? 1 : 0
+            zadatek_oplacony: typ === 'zadatek' ? 1 : 0,
+            notatka: notatka || null
         }).eq('id', terminId);
         res.json({ success: true });
     } catch (err) {
@@ -475,6 +333,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                 .termin { background: #f0f0f0; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; display: inline-block; }
                 .rezerwacja-item { border-left: 4px solid #667eea; padding: 10px; margin: 10px 0; background: #f9f9f9; }
                 .odliczanie { font-size: 20px; font-weight: bold; color: #e74c3c; margin: 10px 0; }
+                textarea { font-family: Arial; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
             </style>
         </head>
         <body>
@@ -494,7 +353,6 @@ app.get('/rezerwacje-klient', async (req, res) => {
                         <option value="calkowita">Całość kwoty</option>
                     </select>
                     <input type="hidden" id="wybranaCena">
-                    const notatka = document.getElementById('notatka').value;
                     <button onclick="zarezerwujZPlatnoscia()">Przejdź do płatności</button>
                 </div>
                 <hr>
@@ -531,6 +389,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     const klientEmail = document.getElementById('klientEmail').value;
                     const platnoscTyp = document.getElementById('platnoscTyp').value;
                     const kwota = parseFloat(document.getElementById('wybranaCena').value);
+                    const notatka = document.getElementById('notatka').value;
                     if (!terminId || !klientNazwa || !klientEmail || !kwota) {
                         alert('Wypełnij wszystkie dane lub wybierz termin');
                         return;
@@ -539,7 +398,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     const res = await fetch('/api/create-checkout-session', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ terminId, klientNazwa, klientEmail, kwota: zadatek, typ: platnoscTyp })
+                        body: JSON.stringify({ terminId, klientNazwa, klientEmail, kwota: zadatek, typ: platnoscTyp, notatka })
                     });
                     const data = await res.json();
                     if (data.url) {
@@ -556,10 +415,11 @@ app.get('/rezerwacje-klient', async (req, res) => {
                         const klientEmail = urlParams.get('klientEmail');
                         const kwota = urlParams.get('kwota');
                         const typ = urlParams.get('typ');
+                        const notatka = urlParams.get('notatka');
                         fetch('/api/confirm-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ terminId, klientNazwa, klientEmail, kwota, typ })
+                            body: JSON.stringify({ terminId, klientNazwa, klientEmail, kwota, typ, notatka })
                         }).then(() => {
                             alert('Płatność zakończona pomyślnie! Rezerwacja została zapisana.');
                             window.location.href = '/rezerwacje-klient';
@@ -630,7 +490,7 @@ app.get('/api/moje-rezerwacje', async (req, res) => {
 
 app.post('/api/anuluj-rezerwacje-klient', async (req, res) => {
     const { id } = req.body;
-    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null }).eq('id', id);
+    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null, notatka: null }).eq('id', id);
     res.json({ success: true });
 });
 
