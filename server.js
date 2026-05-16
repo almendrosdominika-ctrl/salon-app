@@ -118,12 +118,72 @@ app.get('/panel', (req, res) => {
                 <input type="text" id="usluga" placeholder="Nazwa usługi (np. Piercing ucha)" required><br>
                 <input type="number" id="cena" placeholder="Cena (PLN)" required><br>
                 <button onclick="dodajTermin()">Dodaj</button>
+                <h2>📋 Moje usługi</h2>
+<div id="uslugiLista"></div>
+<button onclick="pokazFormularzUslugi()">➕ Nowa usługa</button>
+<div id="formularzUslugi" style="display:none;">
+    <input type="text" id="nazwaUslugi" placeholder="Nazwa usługi"><br>
+    <input type="number" id="cenaUslugi" placeholder="Cena (PLN)"><br>
+    <input type="number" id="czasUslugi" placeholder="Czas (minuty)"><br>
+    <button onclick="dodajUsluge()">Zapisz</button>
+    <button onclick="ukryjFormularzUslugi()">Anuluj</button>
+</div>
+<hr>
                 <h2>📋 Moje terminy</h2>
                 <div id="terminyLista"></div>
                 <h2>📌 Rezerwacje klientów</h2>
                 <div id="rezerwacjeLista"></div>
             </div>
          <script>
+         async function ladujUslugi() {
+    const res = await fetch('/api/uslugi');
+    const uslugi = await res.json();
+    let html = '<td><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Czas (min)</th><th>Akcja</th></tr></thead><tbody>';
+    for (let i = 0; i < uslugi.length; i++) {
+        const u = uslugi[i];
+        html += '<tr>';
+        html += '<td>' + u.id + '</td>';
+        html += '<td>' + u.nazwa + '</td>';
+        html += '<td>' + u.cena + '</td>';
+        html += '<td>' + u.czas_trwania_minuty + '</td>';
+        html += '<td><button onclick="usunUsluge(' + u.id + ')">Usuń</button></td>';
+        html += '</tr>';
+    }
+    html += '</tbody></tr>';
+    document.getElementById('uslugiLista').innerHTML = html;
+}
+
+function pokazFormularzUslugi() {
+    document.getElementById('formularzUslugi').style.display = 'block';
+}
+function ukryjFormularzUslugi() {
+    document.getElementById('formularzUslugi').style.display = 'none';
+}
+async function dodajUsluge() {
+    const nazwa = document.getElementById('nazwaUslugi').value;
+    const cena = document.getElementById('cenaUslugi').value;
+    const czas = document.getElementById('czasUslugi').value;
+    if (!nazwa || !cena || !czas) { alert('Wypełnij wszystko'); return; }
+    const res = await fetch('/api/dodaj-usluge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nazwa, cena: parseInt(cena), czas_trwania_minuty: parseInt(czas) })
+    });
+    const data = await res.json();
+    if (data.success) {
+        ladujUslugi();
+        ukryjFormularzUslugi();
+        document.getElementById('nazwaUslugi').value = '';
+        document.getElementById('cenaUslugi').value = '';
+        document.getElementById('czasUslugi').value = '';
+    } else { alert('Błąd'); }
+}
+async function usunUsluge(id) {
+    if (confirm('Usunąć?')) {
+        await fetch('/api/usun-usluge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        ladujUslugi();
+    }
+}
         async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
