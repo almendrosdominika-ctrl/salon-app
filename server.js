@@ -252,6 +252,23 @@ async function usunUsluge(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data, godzina, usluga, cena })
         });
+        async function ladujUslugi() {
+    const res = await fetch('/api/uslugi', { credentials: 'include' });
+    const uslugi = await res.json();
+    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Czas (min)</th><th>Akcja</th></tr></thead><tbody>';
+    for (let i = 0; i < uslugi.length; i++) {
+        const u = uslugi[i];
+        html += '<tr>';
+        html += '<td>' + u.id + '</td>';
+        html += '<td>' + u.nazwa + '</td>';
+        html += '<td>' + u.cena + '</td>';
+        html += '<td>' + u.czas_trwania_minuty + '</td>';
+        html += '<td><button onclick="usunUsluge(' + u.id + ')">Usuń</button></td>';
+        html += '<tr>';
+    }
+    html += '</tbody></table>';
+    document.getElementById('uslugiLista').innerHTML = html;
+}
         ladujTerminy();
         document.getElementById('data').value = '';
         document.getElementById('godzina').value = '';
