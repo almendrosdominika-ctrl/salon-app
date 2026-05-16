@@ -135,10 +135,10 @@ app.get('/panel', (req, res) => {
                 <div id="rezerwacjeLista"></div>
             </div>
          <script>
-         async function ladujUslugi() {
-    const res = await fetch('/api/uslugi');
+        async function ladujUslugi() {
+    const res = await fetch('/api/uslugi', { credentials: 'include' });
     const uslugi = await res.json();
-    let html = '<td><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Czas (min)</th><th>Akcja</th></tr></thead><tbody>';
+    let html = '<tr><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Czas (min)</th><th>Akcja</th></tr></thead><tbody>';
     for (let i = 0; i < uslugi.length; i++) {
         const u = uslugi[i];
         html += '<tr>';
@@ -149,7 +149,7 @@ app.get('/panel', (req, res) => {
         html += '<td><button onclick="usunUsluge(' + u.id + ')">Usuń</button></td>';
         html += '</tr>';
     }
-    html += '</tbody></tr>';
+    html += '</tbody></table>';
     document.getElementById('uslugiLista').innerHTML = html;
 }
 
@@ -167,7 +167,8 @@ async function dodajUsluge() {
     const res = await fetch('/api/dodaj-usluge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nazwa, cena: parseInt(cena), czas_trwania_minuty: parseInt(czas) })
+        body: JSON.stringify({ nazwa, cena: parseInt(cena), czas_trwania_minuty: parseInt(czas) }),
+        credentials: 'include'
     });
     const data = await res.json();
     if (data.success) {
@@ -180,10 +181,16 @@ async function dodajUsluge() {
 }
 async function usunUsluge(id) {
     if (confirm('Usunąć?')) {
-        await fetch('/api/usun-usluge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        await fetch('/api/usun-usluge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+            credentials: 'include'
+        });
         ladujUslugi();
     }
 }
+
         async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
