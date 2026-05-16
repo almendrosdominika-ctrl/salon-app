@@ -268,7 +268,7 @@ async function usunUsluge(id) {
         ladujTerminy();
     }
 
-    async function anulujRezerwacje(id) {
+      async function anulujRezerwacje(id) {
         await fetch('/api/anuluj-rezerwacje-salon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -280,11 +280,8 @@ async function usunUsluge(id) {
 
     ladujTerminy();
     ladujRezerwacje();
+    ladujUslugi();   // <---- DODANE
 </script>
-        </body>
-        </html>
-    `);
-});
 // ---------- USŁUGI ----------
 app.get('/api/uslugi', async (req, res) => {
     // na czas testu pomiń sprawdzanie sesji
