@@ -521,8 +521,7 @@ app.post('/api/anuluj-rezerwacje-klient', async (req, res) => {
     const { id } = req.body;
     await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null, notatka: null }).eq('id', id);
     res.json({ success: true });
-});bledy
-
+});
 app.get('/wyloguj', (req, res) => {
     req.session.destroy();
     res.redirect('/');
