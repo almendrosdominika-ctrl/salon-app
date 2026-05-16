@@ -3,13 +3,12 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const Stripe = require('stripe');
-const notatki = require('./notatki');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-// Stripe - TWÓJ TESTOWY KLUCZ TAJNY (wklejony poprawnie)
 const stripe = Stripe('sk_test_51TSfVFHXPWEiqBNHQkksNKR64uJ85peY0S9Zkn8zT9tiLgD9JIXa6koDs8F4U89tak8E7lak6sGUzsKOwPw2drO400utRV5wKA');
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -34,8 +33,7 @@ app.get('/ping', (req, res) => res.send('pong'));
 const supabaseUrl = 'https://mzikoowaictyhtxawmkm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16aWtvb3dhaWN0eWh0eGF3bWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTU2MjIsImV4cCI6MjA5MzE3MTYyMn0.XPUMq7CXL6J_-gBU1vwSgdOTvB1C8SkwdyzKrNvqzFo';
 const supabase = createClient(supabaseUrl, supabaseKey);
-const supabase = createClient(supabaseUrl, supabaseKey);
-notatki(app, supabase);   // <-- DODAJ TĘ LINIĘ TUTAJ
+
 app.get('/', (req, res) => {
     res.send('<h1>SalonApp działa!</h1><a href="/login-panel">Panel salonu</a><br><a href="/rezerwacje-klient">Rezerwuj wizytę</a>');
 });
@@ -129,7 +127,7 @@ app.get('/panel', (req, res) => {
     async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
-        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th><tr></thead><tbody>';
+        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(terminy) && terminy.length) {
             terminy.forEach(t => {
                 html += `<tr>
@@ -137,12 +135,12 @@ app.get('/panel', (req, res) => {
                 <td>${t.godzina || ''}</td>
                 <td>${t.usluga || ''}</td>
                 <td>${t.cena || 0}</td>
-                <td>${t.status || ''}</td>
+                <td>${t.status || ''}<td>
                 <td>${t.status === 'wolny' ? '<button onclick="usunTermin(' + t.id + ')">Usuń</button>' : ''}</td>
             </tr>`;
             });
         } else {
-            html += '<tr><td colspan="6">Brak terminów</t2d></tr>';
+            html += '<tr><td colspan="6">Brak terminów</td></tr>';
         }
         html += '</tbody></table>';
         document.getElementById('terminyLista').innerHTML = html;
@@ -151,7 +149,7 @@ app.get('/panel', (req, res) => {
     async function ladujRezerwacje() {
         const res = await fetch('/api/rezerwacje-salonu');
         const rezerwacje = await res.json();
-        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Notatka</th><th>Akcja</th></tr></thead><tbody>';
+        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(rezerwacje) && rezerwacje.length) {
             rezerwacje.forEach(r => {
                 html += `<tr>
@@ -159,14 +157,13 @@ app.get('/panel', (req, res) => {
                 <td>${r.godzina || ''}</td>
                 <td>${r.klient_nazwa || ''}</td>
                 <td>${r.klient_email || ''}</td>
-                <td>${r.notatka || ''}</td>
                 <td><button class="danger" onclick="anulujRezerwacje(${r.id})">Odmów</button></td>
             </tr>`;
             });
         } else {
-            html += '<tr><td colspan="6">Brak rezerwacji</td></tr>';
+            html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
         }
-        html += '</tbody></table>';
+        html += '</tbody></tr>';
         document.getElementById('rezerwacjeLista').innerHTML = html;
     }
 
@@ -252,7 +249,7 @@ app.post('/api/usun-termin', async (req, res) => {
 
 app.post('/api/anuluj-rezerwacje-salon', async (req, res) => {
     const { id } = req.body;
-    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null, notatka: null }).eq('id', id);
+    await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null }).eq('id', id);
     res.json({ success: true });
 });
 
@@ -267,6 +264,8 @@ app.get('/api/wolne-terminy', async (req, res) => {
     const { data } = await supabase.from('terminy').select('*').eq('salon_id', salon_id).eq('status', 'wolny').order('data', { ascending: true });
     res.json(data || []);
 });
+
+// ---------- NOTATKA (zapis przed płatnością) ----------
 app.post('/api/zapisz-notatke', async (req, res) => {
     const { terminId, notatka } = req.body;
     if (!terminId) return res.status(400).json({ error: 'Brak ID terminu' });
@@ -274,6 +273,7 @@ app.post('/api/zapisz-notatke', async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
 });
+
 // ---------- STRIPE ENDPOINTS ----------
 app.post('/api/create-checkout-session', async (req, res) => {
     const { terminId, klientNazwa, klientEmail, kwota, typ, notatka } = req.body;
@@ -318,7 +318,7 @@ app.post('/api/confirm-payment', async (req, res) => {
     }
 });
 
-// ---------- STRONA REZERWACJI KLIENTA (z Stripe) ----------
+// ---------- STRONA REZERWACJI KLIENTA ----------
 app.get('/rezerwacje-klient', async (req, res) => {
     const { data: salony } = await supabase.from('salony').select('id, nazwa');
     let listaSalonow = '<option value="">Wybierz salon...</option>';
@@ -334,12 +334,11 @@ app.get('/rezerwacje-klient', async (req, res) => {
             <style>
                 body { font-family: Arial; background: #667eea; padding: 20px; }
                 .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
-                select, input, button { width: 100%; padding: 10px; margin: 10px 0; }
+                select, input, button, textarea { width: 100%; padding: 10px; margin: 10px 0; }
                 button { background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; }
                 .termin { background: #f0f0f0; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; display: inline-block; }
                 .rezerwacja-item { border-left: 4px solid #667eea; padding: 10px; margin: 10px 0; background: #f9f9f9; }
                 .odliczanie { font-size: 20px; font-weight: bold; color: #e74c3c; margin: 10px 0; }
-                textarea { font-family: Arial; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
             </style>
         </head>
         <body>
@@ -352,7 +351,7 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     <input type="hidden" id="wybranyTerminId">
                     <input type="text" id="klientNazwa" placeholder="Imię i nazwisko" required>
                     <input type="email" id="klientEmail" placeholder="Email" required>
-                    <textarea id="notatka" placeholder="Notatka dla salonu (opcjonalnie, max 1000 znaków)" maxlength="1000" rows="4" style="width:100%;"></textarea>
+                    <textarea id="notatka" placeholder="Notatka dla salonu (opcjonalnie, max 1000 znaków)" maxlength="1000" rows="4"></textarea>
                     <button type="button" onclick="zapiszNotatke()">💾 Zapisz notatkę</button>
                     <label>Wybierz opcję płatności:</label>
                     <select id="platnoscTyp">
@@ -390,14 +389,25 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     document.getElementById('formularz').style.display = 'block';
                     document.getElementById('formularz').scrollIntoView({ behavior: 'smooth' });
                 }
-               
-    const data = await res.json();
-    if (data.success) {
-        alert('Notatka zapisana!');
-    } else {
-        alert('Błąd: ' + (data.error || 'nieznany błąd'));
-    }
-}
+                async function zapiszNotatke() {
+                    const terminId = document.getElementById('wybranyTerminId').value;
+                    const notatka = document.getElementById('notatka').value;
+                    if (!terminId) {
+                        alert('Najpierw wybierz termin z listy');
+                        return;
+                    }
+                    const res = await fetch('/api/zapisz-notatke', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ terminId, notatka })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('Notatka zapisana!');
+                    } else {
+                        alert('Błąd: ' + (data.error || 'nieznany błąd'));
+                    }
+                }
                 async function zarezerwujZPlatnoscia() {
                     const terminId = document.getElementById('wybranyTerminId').value;
                     const klientNazwa = document.getElementById('klientNazwa').value;
@@ -507,19 +517,13 @@ app.post('/api/anuluj-rezerwacje-klient', async (req, res) => {
     const { id } = req.body;
     await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null, notatka: null }).eq('id', id);
     res.json({ success: true });
-});
+});bledy
 
 app.get('/wyloguj', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
-app.post('/api/zapisz-notatke', async (req, res) => {
-    const { terminId, notatka } = req.body;
-    if (!terminId) return res.status(400).json({ error: 'Brak ID terminu' });
-    const { error } = await supabase.from('terminy').update({ notatka: notatka || null }).eq('id', terminId);
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ success: true });
-});
+
 app.listen(port, '0.0.0.0', () => {
     console.log('Serwer działa na http://localhost:' + port);
 });
