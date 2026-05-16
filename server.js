@@ -218,7 +218,23 @@ app.get('/panel', (req, res) => {
         </html>
     `);
 });
-
+// ---------- USŁUGI ----------
+app.get('/api/uslugi', async (req, res) => {
+    if (!req.session.salon_id) return res.json([]);
+    const { data } = await supabase.from('uslugi').select('*').eq('salon_id', req.session.salon_id);
+    res.json(data || []);
+});
+app.post('/api/dodaj-usluge', async (req, res) => {
+    if (!req.session.salon_id) return res.status(401).json({ error: 'Brak sesji' });
+    const { nazwa, cena, czas_trwania_minuty } = req.body;
+    await supabase.from('uslugi').insert([{ salon_id: req.session.salon_id, nazwa, cena, czas_trwania_minuty, aktywny: true }]);
+    res.json({ success: true });
+});
+app.post('/api/usun-usluge', async (req, res) => {
+    const { id } = req.body;
+    await supabase.from('uslugi').delete().eq('id', id);
+    res.json({ success: true });
+});
 // ---------- API SALONU ----------
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
