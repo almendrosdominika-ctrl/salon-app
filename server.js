@@ -124,21 +124,24 @@ app.get('/panel', (req, res) => {
                 <div id="rezerwacjeLista"></div>
             </div>
          <script>
-    async function ladujTerminy() {
+        async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
         let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(terminy) && terminy.length) {
-            terminy.forEach(t => {
-                html += `<tr>
-                <td>${t.data || ''}</td>
-                <td>${t.godzina || ''}</td>
-                <td>${t.usluga || ''}</td>
-                <td>${t.cena || 0}</td>
-                <td>${t.status || ''}<td>
-                <td>${t.status === 'wolny' ? '<button onclick="usunTermin(' + t.id + ')">Usuń</button>' : ''}</td>
-            </tr>`;
-            });
+            for (let i = 0; i < terminy.length; i++) {
+                const t = terminy[i];
+                html += '<tr>';
+                html += '<td>' + (t.data || '') + '</td>';
+                html += '<td>' + (t.godzina || '') + '</td>';
+                html += '<td>' + (t.usluga || '') + '</td>';
+                html += '<td>' + (t.cena || 0) + '</td>';
+                html += '<td>' + (t.status || '') + '</td>';
+                html += '<td>';
+                if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
+                html += '</td>';
+                html += '</tr>';
+            }
         } else {
             html += '<tr><td colspan="6">Brak terminów</td></tr>';
         }
@@ -146,24 +149,25 @@ app.get('/panel', (req, res) => {
         document.getElementById('terminyLista').innerHTML = html;
     }
 
-    async function ladujRezerwacje() {
+       async function ladujRezerwacje() {
         const res = await fetch('/api/rezerwacje-salonu');
         const rezerwacje = await res.json();
         let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(rezerwacje) && rezerwacje.length) {
-            rezerwacje.forEach(r => {
-                html += `<tr>
-                <td>${r.data || ''}</td>
-                <td>${r.godzina || ''}</td>
-                <td>${r.klient_nazwa || ''}</td>
-                <td>${r.klient_email || ''}</td>
-                <td><button class="danger" onclick="anulujRezerwacje(${r.id})">Odmów</button></td>
-            </tr>`;
-            });
+            for (let i = 0; i < rezerwacje.length; i++) {
+                const r = rezerwacje[i];
+                html += '<tr>';
+                html += '<td>' + (r.data || '') + '</td>';
+                html += '<td>' + (r.godzina || '') + '</td>';
+                html += '<td>' + (r.klient_nazwa || '') + '</td>';
+                html += '<td>' + (r.klient_email || '') + '</td>';
+                html += '<td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button></td>';
+                html += '</tr>';
+            }
         } else {
             html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
         }
-        html += '</tbody></tr>';
+        html += '</tbody></table>';
         document.getElementById('rezerwacjeLista').innerHTML = html;
     }
 
