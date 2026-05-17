@@ -127,10 +127,10 @@ app.get('/panel', (req, res) => {
     async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
-        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th><tr></thead><tbody>';
         if (Array.isArray(terminy) && terminy.length) {
             terminy.forEach(t => {
-                html += `</td>
+                html += `<tr>
                 <td>${t.data || ''}</td>
                 <td>${t.godzina || ''}</td>
                 <td>${t.usluga || ''}</td>
@@ -140,7 +140,7 @@ app.get('/panel', (req, res) => {
             </tr>`;
             });
         } else {
-            html += '<tr><td colspan="6">Brak terminów</td></tr>';
+            html += '<td><td colspan="6">Brak terminów</td></tr>';
         }
         html += '</tbody></tr>';
         document.getElementById('terminyLista').innerHTML = html;
