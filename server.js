@@ -623,7 +623,32 @@ app.get('/wyloguj', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
+// Tymczasowy endpoint – dodaje przykładowe usługi dla zalogowanego salonu
+app.get('/dodaj-uslugi', async (req, res) => {
+    if (!req.session.salon_id) return res.send('Zaloguj się najpierw do panelu.');
+    const salonId = req.session.salon_id;
+    const przykładowe = [
+        { nazwa: 'Manicure hybrydowy', cena: 120, czas: 60 },
+        { nazwa: 'Pedicure', cena: 150, czas: 75 },
+        { nazwa: 'Stylizacja paznokci', cena: 90, czas: 45 }
+    ];
+    let dodane = 0;
+    for (let u of przykładowe) {
+        const { error } = await supabase.from('uslugi').insert([{
+            salon_id: salonId,
+            nazwa: u.nazwa,
+            cena: u.cena,
+            czas_trwania_minuty: u.czas,
+            aktywny: true
+        }]);
+        if (!error) dodane++;
+    }
+    res.send(`Dodano ${dodane} usług dla salonu ID ${salonId}. Możesz wrócić do panelu i odświeżyć.`);
+});
 
+app.listen(port, '0.0.0.0', () => {
+    console.log('Serwer działa na http://localhost:' + port);
+});
 app.listen(port, '0.0.0.0', () => {
     console.log('Serwer działa na http://localhost:' + port);
 });
