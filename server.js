@@ -348,7 +348,16 @@ app.get('/rezerwacje-klient', async (req, res) => {
         <body>
             <div class="container">
                 <h1>📅 Rezerwacja wizyty</h1>
-                <select id="salonSelect">${listaSalonow}</select>
+                <div>
+    <label>Miasto:</label>
+    <select id="miastoSelect">
+        <option value="">Wybierz miasto...</option>
+    </select>
+</div>
+<div id="salonDiv" style="display:none;">
+    <label>Salon:</label>
+    <select id="salonSelect"></select>
+</div>
                 <div id="terminyContainer"></div>
                 <div id="formularz" style="display:none;">
                     <h3>Twoje dane</h3>
@@ -372,6 +381,49 @@ app.get('/rezerwacje-klient', async (req, res) => {
                 <div id="mojeRezerwacje"></div>
             </div>
             <script>
+            // Pobierz miasta i wypełnij select
+let wszystkieSalony = [];
+
+async function pobierzMiasta() {
+    const res = await fetch('/api/miasta');
+    const miasta = await res.json();
+    const selectMiasto = document.getElementById('miastoSelect');
+    miasta.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        selectMiasto.appendChild(opt);
+    });
+    // Po załadowaniu miast, pobierz wszystkie salony (aby móc filtrować)
+    const resSalony = await fetch('/api/salony');
+    wszystkieSalony = await resSalony.json();
+    // Zapisz oryginalne opcje salonSelect (bo będziemy je pokazywać/ukrywać)
+    const salonSelect = document.getElementById('salonSelect');
+    // Zapamiętaj oryginalne opcje (jeśli nie są jeszcze załadowane dynamicznie? Są generowane przez server)
+    // Na razie salonSelect jest już wypełnione przez ${listaSalonow}. Wystarczy dodać filtr.
+    selectMiasto.onchange = function() {
+        const wybraneMiasto = this.value;
+        for (let opt of salonSelect.options) {
+            const salon = wszystkieSalony.find(s => s.id == opt.value);
+            if (!wybraneMiasto || (salon && salon.miasto === wybraneMiasto)) {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+            }
+        }
+        // Ustaw pierwszy widoczny salon jako wybrany (jeśli jakiś jest)
+        for (let opt of salonSelect.options) {
+            if (opt.style.display !== 'none') {
+                salonSelect.value = opt.value;
+                break;
+            }
+        }
+        // Wymuś wywołanie onchange salonSelect (załaduje terminy)
+        if (salonSelect.onchange) salonSelect.onchange();
+    };
+}
+
+pobierzMiasta();
                 document.getElementById('salonSelect').onchange = async function() {
                     const salonId = this.value;
                     if(!salonId) return;
