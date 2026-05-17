@@ -252,10 +252,14 @@ app.post('/api/anuluj-rezerwacje-salon', async (req, res) => {
     await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null }).eq('id', id);
     res.json({ success: true });
 });
-
+app.get('/api/miasta', async (req, res) => {
+    const { data } = await supabase.from('salony').select('miasto').not('miasto', 'is', null);
+    const miasta = [...new Set(data.map(item => item.miasto))];
+    res.json(miasta);
+});
 // ---------- API KLIENTA ----------
 app.get('/api/salony', async (req, res) => {
-    const { data } = await supabase.from('salony').select('id, nazwa');
+    const { data } = await supabase.from('salony').select('id, nazwa, miasto');
     res.json(data || []);
 });
 
