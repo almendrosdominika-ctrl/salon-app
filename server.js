@@ -118,123 +118,52 @@ app.get('/panel', (req, res) => {
                 <input type="text" id="usluga" placeholder="Nazwa usługi (np. Piercing ucha)" required><br>
                 <input type="number" id="cena" placeholder="Cena (PLN)" required><br>
                 <button onclick="dodajTermin()">Dodaj</button>
-                <h2>📋 Moje usługi</h2>
-<div id="uslugiLista"></div>
-<button onclick="pokazFormularzUslugi()">➕ Nowa usługa</button>
-<div id="formularzUslugi" style="display:none;">
-    <input type="text" id="nazwaUslugi" placeholder="Nazwa usługi"><br>
-    <input type="number" id="cenaUslugi" placeholder="Cena (PLN)"><br>
-    <input type="number" id="czasUslugi" placeholder="Czas (minuty)"><br>
-    <button onclick="dodajUsluge()">Zapisz</button>
-    <button onclick="ukryjFormularzUslugi()">Anuluj</button>
-</div>
-<hr>
                 <h2>📋 Moje terminy</h2>
                 <div id="terminyLista"></div>
                 <h2>📌 Rezerwacje klientów</h2>
                 <div id="rezerwacjeLista"></div>
             </div>
          <script>
-        async function ladujUslugi() {
-    const res = await fetch('/api/uslugi', { credentials: 'include' });
-    const uslugi = await res.json();
-    let html = '<tr><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Czas (min)</th><th>Akcja</th></tr></thead><tbody>';
-    for (let i = 0; i < uslugi.length; i++) {
-        const u = uslugi[i];
-        html += '<tr>';
-        html += '<td>' + u.id + '</td>';
-        html += '<td>' + u.nazwa + '</td>';
-        html += '<td>' + u.cena + '</td>';
-        html += '<td>' + u.czas_trwania_minuty + '</td>';
-        html += '<td><button onclick="usunUsluge(' + u.id + ')">Usuń</button></td>';
-        html += '</tr>';
-    }
-    html += '</tbody></table>';
-    document.getElementById('uslugiLista').innerHTML = html;
-}
-
-function pokazFormularzUslugi() {
-    document.getElementById('formularzUslugi').style.display = 'block';
-}
-function ukryjFormularzUslugi() {
-    document.getElementById('formularzUslugi').style.display = 'none';
-}
-async function dodajUsluge() {
-    const nazwa = document.getElementById('nazwaUslugi').value;
-    const cena = document.getElementById('cenaUslugi').value;
-    const czas = document.getElementById('czasUslugi').value;
-    if (!nazwa || !cena || !czas) { alert('Wypełnij wszystko'); return; }
-    const res = await fetch('/api/dodaj-usluge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nazwa, cena: parseInt(cena), czas_trwania_minuty: parseInt(czas) }),
-        credentials: 'include'
-    });
-    const data = await res.json();
-    if (data.success) {
-        ladujUslugi();
-        ukryjFormularzUslugi();
-        document.getElementById('nazwaUslugi').value = '';
-        document.getElementById('cenaUslugi').value = '';
-        document.getElementById('czasUslugi').value = '';
-    } else { alert('Błąd'); }
-}
-async function usunUsluge(id) {
-    if (confirm('Usunąć?')) {
-        await fetch('/api/usun-usluge', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id }),
-            credentials: 'include'
-        });
-        ladujUslugi();
-    }
-}
-
-        async function ladujTerminy() {
+    async function ladujTerminy() {
         const res = await fetch('/api/terminy-salonu');
         const terminy = await res.json();
-        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
+        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Usługa</th><th>Cena (PLN)</th><th>Status</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(terminy) && terminy.length) {
-            for (let i = 0; i < terminy.length; i++) {
-                const t = terminy[i];
-                html += '<tr>';
-                html += '<td>' + (t.data || '') + '</td>';
-                html += '<td>' + (t.godzina || '') + '</td>';
-                html += '<td>' + (t.usluga || '') + '</td>';
-                html += '<td>' + (t.cena || 0) + '</td>';
-                html += '<td>' + (t.status || '') + '</td>';
-                html += '<td>';
-                if (t.status === 'wolny') html += '<button onclick="usunTermin(' + t.id + ')">Usuń</button>';
-                html += '</td>';
-                html += '</tr>';
-            }
+            terminy.forEach(t => {
+                html += `</td>
+                <td>${t.data || ''}</td>
+                <td>${t.godzina || ''}</td>
+                <td>${t.usluga || ''}</td>
+                <td>${t.cena || 0}</td>
+                <td>${t.status || ''}</td>
+                <td>${t.status === 'wolny' ? '<button onclick="usunTermin(' + t.id + ')">Usuń</button>' : ''}</td>
+            </tr>`;
+            });
         } else {
             html += '<tr><td colspan="6">Brak terminów</td></tr>';
         }
-        html += '</tbody></table>';
+        html += '</tbody></tr>';
         document.getElementById('terminyLista').innerHTML = html;
     }
 
-       async function ladujRezerwacje() {
+    async function ladujRezerwacje() {
         const res = await fetch('/api/rezerwacje-salonu');
         const rezerwacje = await res.json();
-        let html = '<table><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
+        let html = '<tr><thead><tr><th>Data</th><th>Godzina</th><th>Klient</th><th>Email</th><th>Akcja</th></tr></thead><tbody>';
         if (Array.isArray(rezerwacje) && rezerwacje.length) {
-            for (let i = 0; i < rezerwacje.length; i++) {
-                const r = rezerwacje[i];
-                html += '<tr>';
-                html += '<td>' + (r.data || '') + '</td>';
-                html += '<td>' + (r.godzina || '') + '</td>';
-                html += '<td>' + (r.klient_nazwa || '') + '</td>';
-                html += '<td>' + (r.klient_email || '') + '</td>';
-                html += '<td><button class="danger" onclick="anulujRezerwacje(' + r.id + ')">Odmów</button></td>';
-                html += '</tr>';
-            }
+            rezerwacje.forEach(r => {
+                html += `<tr>
+                <td>${r.data || ''}</td>
+                <td>${r.godzina || ''}</td>
+                <td>${r.klient_nazwa || ''}</td>
+                <td>${r.klient_email || ''}</td>
+                <td><button class="danger" onclick="anulujRezerwacje(${r.id})">Odmów</button></td>
+            </tr>`;
+            });
         } else {
             html += '<tr><td colspan="5">Brak rezerwacji</td></tr>';
         }
-        html += '</tbody></table>';
+        html += '</tbody></tr>';
         document.getElementById('rezerwacjeLista').innerHTML = html;
     }
 
@@ -252,23 +181,6 @@ async function usunUsluge(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data, godzina, usluga, cena })
         });
-        async function ladujUslugi() {
-    const res = await fetch('/api/uslugi', { credentials: 'include' });
-    const uslugi = await res.json();
-    let html = '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Czas (min)</th><th>Akcja</th></tr></thead><tbody>';
-    for (let i = 0; i < uslugi.length; i++) {
-        const u = uslugi[i];
-        html += '<tr>';
-        html += '<td>' + u.id + '</td>';
-        html += '<td>' + u.nazwa + '</td>';
-        html += '<td>' + u.cena + '</td>';
-        html += '<td>' + u.czas_trwania_minuty + '</td>';
-        html += '<td><button onclick="usunUsluge(' + u.id + ')">Usuń</button></td>';
-        html += '<tr>';
-    }
-    html += '</tbody></table>';
-    document.getElementById('uslugiLista').innerHTML = html;
-}
         ladujTerminy();
         document.getElementById('data').value = '';
         document.getElementById('godzina').value = '';
@@ -285,7 +197,7 @@ async function usunUsluge(id) {
         ladujTerminy();
     }
 
-      async function anulujRezerwacje(id) {
+    async function anulujRezerwacje(id) {
         await fetch('/api/anuluj-rezerwacje-salon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -297,25 +209,12 @@ async function usunUsluge(id) {
 
     ladujTerminy();
     ladujRezerwacje();
-    ladujUslugi();   // <---- DODANE
 </script>
-// ---------- USŁUGI ----------
-app.get('/api/uslugi', async (req, res) => {
-    // na czas testu pomiń sprawdzanie sesji
-    const { data } = await supabase.from('uslugi').select('*').eq('salon_id', 1); // Twarde ID=1
-    res.json(data || []);
+        </body>
+        </html>
+    `);
 });
-app.post('/api/dodaj-usluge', async (req, res) => {
-    if (!req.session.salon_id) return res.status(401).json({ error: 'Brak sesji' });
-    const { nazwa, cena, czas_trwania_minuty } = req.body;
-    await supabase.from('uslugi').insert([{ salon_id: req.session.salon_id, nazwa, cena, czas_trwania_minuty, aktywny: true }]);
-    res.json({ success: true });
-});
-app.post('/api/usun-usluge', async (req, res) => {
-    const { id } = req.body;
-    await supabase.from('uslugi').delete().eq('id', id);
-    res.json({ success: true });
-});
+
 // ---------- API SALONU ----------
 app.get('/api/terminy-salonu', async (req, res) => {
     if (!req.session.salon_id) return res.json([]);
@@ -366,7 +265,7 @@ app.get('/api/wolne-terminy', async (req, res) => {
     res.json(data || []);
 });
 
-// ---------- NOTATKA (zapis przed płatnością) ----------
+// ---------- NOTATKA ----------
 app.post('/api/zapisz-notatke', async (req, res) => {
     const { terminId, notatka } = req.body;
     if (!terminId) return res.status(400).json({ error: 'Brak ID terminu' });
@@ -619,36 +518,12 @@ app.post('/api/anuluj-rezerwacje-klient', async (req, res) => {
     await supabase.from('terminy').update({ status: 'wolny', klient_nazwa: null, klient_email: null, notatka: null }).eq('id', id);
     res.json({ success: true });
 });
+
 app.get('/wyloguj', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
-// Tymczasowy endpoint – dodaje przykładowe usługi dla zalogowanego salonu
-app.get('/dodaj-uslugi', async (req, res) => {
-    if (!req.session.salon_id) return res.send('Zaloguj się najpierw do panelu.');
-    const salonId = req.session.salon_id;
-    const przykładowe = [
-        { nazwa: 'Manicure hybrydowy', cena: 120, czas: 60 },
-        { nazwa: 'Pedicure', cena: 150, czas: 75 },
-        { nazwa: 'Stylizacja paznokci', cena: 90, czas: 45 }
-    ];
-    let dodane = 0;
-    for (let u of przykładowe) {
-        const { error } = await supabase.from('uslugi').insert([{
-            salon_id: salonId,
-            nazwa: u.nazwa,
-            cena: u.cena,
-            czas_trwania_minuty: u.czas,
-            aktywny: true
-        }]);
-        if (!error) dodane++;
-    }
-    res.send(`Dodano ${dodane} usług dla salonu ID ${salonId}. Możesz wrócić do panelu i odświeżyć.`);
-});
 
-app.listen(port, '0.0.0.0', () => {
-    console.log('Serwer działa na http://localhost:' + port);
-});
 app.listen(port, '0.0.0.0', () => {
     console.log('Serwer działa na http://localhost:' + port);
 });
