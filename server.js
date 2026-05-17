@@ -397,6 +397,16 @@ async function pobierzMiasta() {
     // Po załadowaniu miast, pobierz wszystkie salony (aby móc filtrować)
     const resSalony = await fetch('/api/salony');
     wszystkieSalony = await resSalony.json();
+    // Wypełnij salonSelect wszystkimi salonami
+const salonSelect = document.getElementById('salonSelect');
+salonSelect.innerHTML = '';
+wszystkieSalony.forEach(salon => {
+    const opt = document.createElement('option');
+    opt.value = salon.id;
+    opt.textContent = salon.nazwa;
+    opt.setAttribute('data-miasto', salon.miasto || '');
+    salonSelect.appendChild(opt);
+});
     // Zapisz oryginalne opcje salonSelect (bo będziemy je pokazywać/ukrywać)
     const salonSelect = document.getElementById('salonSelect');
     // Zapamiętaj oryginalne opcje (jeśli nie są jeszcze załadowane dynamicznie? Są generowane przez server)
