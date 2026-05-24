@@ -354,10 +354,10 @@ app.get('/rezerwacje-klient', async (req, res) => {
                     <textarea id="notatka" placeholder="Notatka dla salonu (opcjonalnie, max 1000 znaków)" maxlength="1000" rows="4"></textarea>
                     <button type="button" onclick="zapiszNotatke()">💾 Zapisz notatkę</button>
                     <label>Wybierz opcję płatności:</label>
-                    <select id="platnoscTyp">
-                        <option value="zadatek">Tylko zadatek (20% kwoty)</option>
-                        <option value="calkowita">Całość kwoty</option>
-                    </select>
+                   <select id="platnoscTyp">
+    <option value="zadatek">Bezzwrotny zadatek (20% kwoty)</option>
+    <option value="calkowita">Całość kwoty</option>
+</select>
                     <input type="hidden" id="wybranaCena">
                     <button onclick="zarezerwujZPlatnoscia()">Przejdź do płatności</button>
                 </div>
