@@ -466,27 +466,34 @@ app.get('/rezerwacje-klient', async (req, res) => {
                         document.getElementById('odliczanie-' + id).innerHTML = '⏰ Do wizyty: ' + txt;
                     }, 1000);
                 }
-                async function pokażRezerwacje() {
-                    const email = document.getElementById('emailSprawdz').value;
-                    if(!email) { alert('Wpisz email'); return; }
-                    const res = await fetch('/api/moje-rezerwacje?email=' + encodeURIComponent(email));
-                    const lista = await res.json();
-                    let html = '';
-                    if (Array.isArray(lista) && lista.length) {
-                        lista.forEach(r => {
-                            html += '<div class="rezerwacja-item" id="r-' + r.id + '"><strong>' + r.nazwa_salonu + '</strong><br>';
-                            html += '📅 ' + r.data + ' o ' + r.godzina + '<br>👤 ' + r.klient_nazwa + '<br>';
-                            html += '<div id="odliczanie-' + r.id + '" class="odliczanie">⏰ Obliczanie...</div>';
-                            html += '<button onclick="anuluj(' + r.id + ')">❌ Anuluj</button></div>';
-                        });
-                    } else {
-                        html = '<p>Brak rezerwacji</p>';
-                    }
-                    document.getElementById('mojeRezerwacje').innerHTML = html;
-                    if (Array.isArray(lista) && lista.length) {
-                        lista.forEach(r => { if(new Date(r.data + 'T' + r.godzina) > new Date()) startCountdown(r.data, r.godzina, r.id); else document.getElementById('odliczanie-' + r.id).innerHTML = '⏰ Termin minął'; });
-                    }
-                }
+          async function pokażRezerwacje() {
+    const email = document.getElementById('emailSprawdz').value;
+    if(!email) { alert('Wpisz email'); return; }
+    const res = await fetch('/api/moje-rezerwacje?email=' + encodeURIComponent(email));
+    const lista = await res.json();
+    let html = '';
+    if (Array.isArray(lista) && lista.length) {
+        const teraz = new Date();
+        lista.forEach(r => {
+            const terminDateTime = new Date(r.data + 'T' + r.godzina);
+            if (terminDateTime <= teraz) return; // pomiń przeterminowane
+            html += '<div class="rezerwacja-item" id="r-' + r.id + '"><strong>' + r.nazwa_salonu + '</strong><br>';
+            html += '📅 ' + r.data + ' o ' + r.godzina + '<br>👤 ' + r.klient_nazwa + '<br>';
+            html += '<div id="odliczanie-' + r.id + '" class="odliczanie">⏰ Obliczanie...</div>';
+            html += '<button onclick="anuluj(' + r.id + ')">❌ Anuluj</button></div>';
+        });
+        if (html === '') html = '<p>Brak przyszłych rezerwacji</p>';
+    } else {
+        html = '<p>Brak rezerwacji</p>';
+    }
+    document.getElementById('mojeRezerwacje').innerHTML = html;
+    if (Array.isArray(lista) && lista.length) {
+        lista.forEach(r => {
+            const terminDateTime = new Date(r.data + 'T' + r.godzina);
+            if (terminDateTime > new Date()) startCountdown(r.data, r.godzina, r.id);
+        });
+    }
+}
                 async function anuluj(id) {
                     if(confirm('Anulować rezerwację?')) {
                         await fetch('/api/anuluj-rezerwacje-klient', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
